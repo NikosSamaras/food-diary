@@ -31,6 +31,10 @@
     <button class="tab" data-view="guide">Οδηγός</button>
     <button class="tab" data-view="export">Εξαγωγή</button>
   </nav>
+  <button class="user-btn" id="userBtn" title="Αλλαγή χρήστη" aria-label="Αλλαγή χρήστη">
+    <span class="user-avatar" id="userAvatar"></span>
+    <span class="user-name" id="userName">—</span>
+  </button>
   <button class="icon-btn" id="themeBtn" title="Εναλλαγή θέματος" aria-label="Εναλλαγή θέματος">◐</button>
 </header>
 
@@ -203,6 +207,21 @@
 <datalist id="dl-snack"></datalist>
 <datalist id="dl-activity"></datalist>
 <datalist id="dl-duration"></datalist>
+
+<div class="overlay" id="userOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+    <div class="modal-head">
+      <h2 id="userModalTitle">👤 Χρήστες</h2>
+      <button class="icon-btn" id="userClose" aria-label="Κλείσιμο">✕</button>
+    </div>
+    <div id="userList" class="user-list"></div>
+    <form id="newUserForm" class="new-user">
+      <input type="text" id="newUserName" placeholder="Όνομα νέου χρήστη…" maxlength="24" autocomplete="off">
+      <button class="primary-btn" type="submit">➕ Δημιουργία</button>
+    </form>
+    <p class="hint">Κάθε χρήστης έχει το δικό του ημερολόγιο σε αυτή τη συσκευή. Λογαριασμοί με online σύνδεση θα προστεθούν σε επόμενη έκδοση.</p>
+  </div>
+</div>
 
 <div class="toast" id="toast" hidden></div>
 

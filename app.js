@@ -8,7 +8,8 @@
 (function () {
   "use strict";
 
-  var STORE_KEY = "imerologio-diatrofis-v1";
+  var LEGACY_STORE_KEY = "imerologio-diatrofis-v1"; // δεδομένα πριν την εισαγωγή χρηστών
+  var PROFILES_KEY = "imerologio-profiles-v1";
   var THEME_KEY = "imerologio-theme";
 
   /* ---------- Ορισμός γευμάτων ---------- */
@@ -71,27 +72,81 @@
     return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
 
+  /* ---------- Χρήστες (προφίλ) ---------- */
+  var profiles = null;
+  try { profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "null"); } catch (e) {}
+  if (!profiles || !profiles.users || !profiles.users.length) {
+    profiles = {
+      current: "nikos",
+      users: [
+        { id: "nikos", name: "Νίκος" },
+        { id: "eva",   name: "Εύα" },
+        { id: "test",  name: "Δοκιμή" }
+      ]
+    };
+    // Μεταφορά δεδομένων από την έκδοση χωρίς χρήστες → στον Νίκο
+    try {
+      var legacy = localStorage.getItem(LEGACY_STORE_KEY);
+      if (legacy && !localStorage.getItem(storeKeyFor("nikos"))) {
+        localStorage.setItem(storeKeyFor("nikos"), legacy);
+      }
+    } catch (e) {}
+    persistProfiles();
+  }
+  if (!profiles.users.some(function (u) { return u.id === profiles.current; })) {
+    profiles.current = profiles.users[0].id;
+  }
+  function storeKeyFor(id) { return LEGACY_STORE_KEY + ":u:" + id; }
+  function persistProfiles() {
+    try { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); } catch (e) {}
+  }
+  function currentUser() {
+    for (var i = 0; i < profiles.users.length; i++) {
+      if (profiles.users[i].id === profiles.current) return profiles.users[i];
+    }
+    return profiles.users[0];
+  }
+  function avatarColor(id) {
+    var h = 0;
+    for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
+    return "hsl(" + h + ",45%,42%)";
+  }
+  function userDayCount(id) {
+    try {
+      var d = JSON.parse(localStorage.getItem(storeKeyFor(id)) || "{}") || {};
+      return Object.keys(d).length;
+    } catch (e) { return 0; }
+  }
+
   /* ---------- Αποθήκευση ---------- */
-  var db = {};
-  try { db = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { db = {}; }
+  function loadDb() {
+    try { return JSON.parse(localStorage.getItem(storeKeyFor(profiles.current)) || "{}") || {}; }
+    catch (e) { return {}; }
+  }
+  var db = loadDb();
 
   function persist() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+    try { localStorage.setItem(storeKeyFor(profiles.current), JSON.stringify(db)); }
     catch (e) { toast("Σφάλμα αποθήκευσης — γεμάτος χώρος browser;"); }
   }
   function blankDay() {
-    var d = { meals: {}, activity: { type: "", duration: "" }, water: 0, notes: "" };
+    var d = { meals: {}, times: {}, activity: { type: "", duration: "" }, water: 0, notes: "" };
     MEALS.forEach(function (m) {
       d.meals[m.id] = {};
       m.slots.forEach(function (s) { d.meals[m.id][s.id] = ""; });
     });
     return d;
   }
-  function getDay(k) { return db[k] || blankDay(); }
+  function getDay(k) {
+    var d = db[k] || blankDay();
+    if (!d.times) d.times = {};
+    return d;
+  }
   function dayHasData(d) {
     if (!d) return false;
     if ((d.activity && (d.activity.type || d.activity.duration)) || d.water > 0 || (d.notes || "").trim()) return true;
     for (var m in d.meals) for (var s in d.meals[m]) if ((d.meals[m][s] || "").trim()) return true;
+    if (d.times) for (var t in d.times) if ((d.times[t] || "").trim()) return true;
     return false;
   }
   function mealDone(day, meal) {
@@ -192,8 +247,11 @@
       card.innerHTML =
         '<div class="card-head">' +
           '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(m.name) + '</h2></div>' +
-          '<span class="badge ' + (m.type === "2άδα" ? "duo" : "trio") + '">' + m.type + '</span>' +
-          '<span class="check">✓</span>' +
+          '<div class="meal-head-right">' +
+            '<input type="time" class="meal-time" data-meal="' + m.id + '" title="Ώρα γεύματος" aria-label="Ώρα — ' + esc(m.name) + '">' +
+            '<span class="badge ' + (m.type === "2άδα" ? "duo" : "trio") + '">' + m.type + '</span>' +
+            '<span class="check">✓</span>' +
+          '</div>' +
         '</div>' +
         '<div class="slots">' + slotsHtml + '</div>';
       wrap.appendChild(card);
@@ -247,8 +305,11 @@
     var label = DOW[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
     $("dayName").textContent = label + (currentKey === todayKey() ? " · Σήμερα" : "");
 
-    document.querySelectorAll("#mealCards input").forEach(function (inp) {
+    document.querySelectorAll("#mealCards input[data-slot]").forEach(function (inp) {
       inp.value = (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "";
+    });
+    document.querySelectorAll("#mealCards .meal-time").forEach(function (inp) {
+      inp.value = (day.times || {})[inp.dataset.meal] || "";
     });
     $("actType").value = day.activity.type || "";
     $("actDuration").value = day.activity.duration || "";
@@ -275,9 +336,12 @@
   }
   function saveCurrentDay() {
     var day = getDay(currentKey);
-    document.querySelectorAll("#mealCards input").forEach(function (inp) {
+    document.querySelectorAll("#mealCards input[data-slot]").forEach(function (inp) {
       if (!day.meals[inp.dataset.meal]) day.meals[inp.dataset.meal] = {};
       day.meals[inp.dataset.meal][inp.dataset.slot] = inp.value.trim();
+    });
+    document.querySelectorAll("#mealCards .meal-time").forEach(function (inp) {
+      day.times[inp.dataset.meal] = inp.value;
     });
     day.activity.type = $("actType").value.trim();
     day.activity.duration = $("actDuration").value.trim();
@@ -291,6 +355,7 @@
   }
   ["mealCards"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
+    $(id).addEventListener("change", scheduleSave); // τα input[type=time] ενημερώνουν αξιόπιστα στο change
   });
   ["actType", "actDuration", "dayNotes"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
@@ -355,10 +420,13 @@
         var day = db[k];
         var cell = "";
         if (day && day.meals && day.meals[m.id]) {
-          cell = m.slots.map(function (s) {
+          var parts = m.slots.map(function (s) {
             var v = (day.meals[m.id][s.id] || "").trim();
             return v ? "<span class='l'>" + esc(SLOT_SHORT[s.id]) + ":</span>" + esc(v) : "";
-          }).filter(Boolean).join("<br>");
+          }).filter(Boolean);
+          var tm = ((day.times || {})[m.id] || "").trim();
+          if (tm) parts.unshift("<span class='l'>🕐 " + esc(tm) + "</span>");
+          cell = parts.join("<br>");
         }
         html += "<td data-day='" + k + "'" + (k === tKey ? ' class="today-col"' : "") + ">" + (cell || "&nbsp;") + "</td>";
       });
@@ -405,6 +473,7 @@
     q = q.toLowerCase();
     var parts = [];
     for (var m in day.meals) for (var s in day.meals[m]) parts.push(day.meals[m][s] || "");
+    if (day.times) for (var t in day.times) parts.push(day.times[t] || "");
     parts.push(day.activity.type || "", day.activity.duration || "", day.notes || "");
     return parts.join(" ").toLowerCase().indexOf(q) !== -1;
   }
@@ -468,7 +537,9 @@
           var v = (d.meals[m.id] || {})[s.id] || "";
           return v ? "<span class='part'><b>" + esc(SLOT_SHORT[s.id]) + ":</b> " + esc(v) + "</span>" : "";
         }).filter(Boolean).join("");
-        return vals ? "<div class='hrow'><span class='hm'>" + m.emoji + " " + esc(m.name) + "</span><span class='hv'>" + vals + "</span></div>" : "";
+        var tm = ((d.times || {})[m.id] || "").trim();
+        var label = m.emoji + " " + esc(m.name) + (tm ? " <span class='htime'>🕐 " + esc(tm) + "</span>" : "");
+        return (vals || tm) ? "<div class='hrow'><span class='hm'>" + label + "</span><span class='hv'>" + (vals || "—") + "</span></div>" : "";
       }).filter(Boolean).join("");
       var extra = "";
       if (d.activity && (d.activity.type || d.activity.duration)) {
@@ -538,6 +609,7 @@
     if (!requireData(keys)) return;
     var head = ["Ημερομηνία", "Ημέρα"];
     MEALS.forEach(function (m) {
+      head.push(m.name + " — Ώρα");
       m.slots.forEach(function (s) { head.push(m.name + " — " + SLOT_SHORT[s.id]); });
     });
     head.push("Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό (ποτήρια)", "Σημειώσεις");
@@ -546,14 +618,15 @@
       var d = db[k];
       var row = [{ v: fmtGr(k), s: "bold" }, DOW[parseKey(k).getDay()]];
       MEALS.forEach(function (m) {
+        row.push((d.times || {})[m.id] || "");
         m.slots.forEach(function (s) { row.push((d.meals[m.id] || {})[s.id] || ""); });
       });
       row.push(d.activity.type || "", d.activity.duration || "", d.water || 0, d.notes || "");
       rows.push(row);
     });
     var cols = [12, 12];
-    for (var i = 2; i < head.length; i++) cols.push(20);
-    MiniXLSX.download("Ημερολόγιο_Διατροφής_" + keys[0] + "_" + keys[keys.length - 1] + ".xlsx",
+    for (var i = 2; i < head.length; i++) cols.push(head[i].indexOf("Ώρα") !== -1 ? 12 : 20);
+    MiniXLSX.download("Ημερολόγιο_Διατροφής_" + currentUser().name + "_" + keys[0] + "_" + keys[keys.length - 1] + ".xlsx",
       [{ name: "Ημερολόγιο", cols: cols, rows: rows }]);
     toast("Το Excel κατέβηκε ✓");
   }
@@ -582,10 +655,13 @@
             var d = db[k];
             var txt = "";
             if (d && d.meals[m.id]) {
-              txt = m.slots.map(function (s) {
+              var lines = m.slots.map(function (s) {
                 var v = (d.meals[m.id][s.id] || "").trim();
                 return v ? SLOT_SHORT[s.id] + ": " + v : "";
-              }).filter(Boolean).join("\n");
+              }).filter(Boolean);
+              var tm = ((d.times || {})[m.id] || "").trim();
+              if (tm) lines.unshift("Ώρα: " + tm);
+              txt = lines.join("\n");
             }
             r.push({ v: txt, s: "wrap" });
           });
@@ -618,7 +694,7 @@
       start = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
     }
     if (!sheets.length) { toast("Δεν υπάρχουν καταγραφές σε αυτό το εύρος."); return; }
-    MiniXLSX.download("Ημερολόγιο_" + (labelWord || "ημερολόγιο") + "_" + from + "_" + to + ".xlsx", sheets);
+    MiniXLSX.download("Ημερολόγιο_" + currentUser().name + "_" + (labelWord || "ημερολόγιο") + "_" + from + "_" + to + ".xlsx", sheets);
     toast("Το Excel κατέβηκε ✓");
   }
 
@@ -629,6 +705,7 @@
     function q(s) { return '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"'; }
     var head = ["Ημερομηνία", "Ημέρα"];
     MEALS.forEach(function (m) {
+      head.push(m.name + " - Ώρα");
       m.slots.forEach(function (s) { head.push(m.name + " - " + SLOT_SHORT[s.id]); });
     });
     head.push("Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό", "Σημειώσεις");
@@ -637,6 +714,7 @@
       var d = db[k];
       var row = [fmtGr(k), DOW[parseKey(k).getDay()]];
       MEALS.forEach(function (m) {
+        row.push((d.times || {})[m.id] || "");
         m.slots.forEach(function (s) { row.push((d.meals[m.id] || {})[s.id] || ""); });
       });
       row.push(d.activity.type || "", d.activity.duration || "", d.water || 0, d.notes || "");
@@ -646,7 +724,7 @@
     var blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "Ημερολόγιο_Διατροφής_" + keys[0] + "_" + keys[keys.length - 1] + ".csv";
+    a.download = "Ημερολόγιο_Διατροφής_" + currentUser().name + "_" + keys[0] + "_" + keys[keys.length - 1] + ".csv";
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
@@ -655,11 +733,11 @@
 
   /* --- JSON backup / restore --- */
   function exportJson() {
-    var blob = new Blob([JSON.stringify({ app: "imerologio-diatrofis", version: 1, exported: new Date().toISOString(), data: db }, null, 2)],
+    var blob = new Blob([JSON.stringify({ app: "imerologio-diatrofis", version: 2, user: currentUser().name, exported: new Date().toISOString(), data: db }, null, 2)],
       { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "imerologio-backup-" + todayKey() + ".json";
+    a.download = "imerologio-backup-" + currentUser().name + "-" + todayKey() + ".json";
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
@@ -711,7 +789,7 @@
   $("expPrint").addEventListener("click", printHistory);
 
   $("wipeAll").addEventListener("click", function () {
-    if (!confirm("ΠΡΟΣΟΧΗ: Θα διαγραφούν ΟΛΕΣ οι καταγραφές οριστικά. Συνέχεια;")) return;
+    if (!confirm("ΠΡΟΣΟΧΗ: Θα διαγραφούν ΟΛΕΣ οι καταγραφές του χρήστη «" + currentUser().name + "» οριστικά. Συνέχεια;")) return;
     if (!confirm("Σίγουρα; Δεν υπάρχει επαναφορά (εκτός αν έχεις αντίγραφο .json).")) return;
     db = {};
     persist();
@@ -719,6 +797,97 @@
     renderHistory();
     updateFootStats();
     toast("Όλα τα δεδομένα διαγράφηκαν");
+  });
+
+  /* ============================================================
+     ΧΡΗΣΤΕΣ: εναλλαγή, δημιουργία, διαγραφή
+     ============================================================ */
+  function renderUserButton() {
+    var u = currentUser();
+    var av = $("userAvatar");
+    av.textContent = (u.name || "?").trim().charAt(0).toUpperCase();
+    av.style.background = avatarColor(u.id);
+    $("userName").textContent = u.name;
+  }
+  function renderUserList() {
+    var list = $("userList");
+    list.innerHTML = profiles.users.map(function (u) {
+      var days = userDayCount(u.id);
+      return "<div class='user-row" + (u.id === profiles.current ? " current" : "") + "' data-user='" + esc(u.id) + "'>" +
+        "<span class='user-avatar' style='background:" + avatarColor(u.id) + "'>" + esc((u.name || "?").trim().charAt(0).toUpperCase()) + "</span>" +
+        "<span class='u-name'>" + esc(u.name) + (u.id === profiles.current ? " <small>· ενεργός</small>" : "") + "</span>" +
+        "<span class='u-days'>" + days + (days === 1 ? " ημέρα" : " ημέρες") + "</span>" +
+        (profiles.users.length > 1 ? "<button type='button' class='u-del' data-del='" + esc(u.id) + "' title='Διαγραφή χρήστη' aria-label='Διαγραφή χρήστη " + esc(u.name) + "'>🗑</button>" : "") +
+        "</div>";
+    }).join("");
+  }
+  function openUserModal() { renderUserList(); $("newUserName").value = ""; $("userOverlay").hidden = false; }
+  function closeUserModal() { $("userOverlay").hidden = true; }
+
+  function refreshAllViews() {
+    renderDay();
+    renderWeek();
+    renderHistory();
+    updateFootStats();
+    renderUserButton();
+  }
+  function switchUser(id) {
+    if (id === profiles.current) { closeUserModal(); return; }
+    clearTimeout(saveDebounce);
+    saveCurrentDay();
+    profiles.current = id;
+    persistProfiles();
+    db = loadDb();
+    refreshAllViews();
+    closeUserModal();
+    toast("Χρήστης: " + currentUser().name + " 👤");
+  }
+
+  $("userBtn").addEventListener("click", openUserModal);
+  $("userClose").addEventListener("click", closeUserModal);
+  $("userOverlay").addEventListener("click", function (e) {
+    if (e.target === this) closeUserModal();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$("userOverlay").hidden) closeUserModal();
+  });
+
+  $("userList").addEventListener("click", function (e) {
+    var del = e.target.closest("[data-del]");
+    if (del) {
+      var uid = del.dataset.del;
+      var u = null;
+      profiles.users.forEach(function (x) { if (x.id === uid) u = x; });
+      if (!u) return;
+      var days = userDayCount(uid);
+      if (!confirm("Να διαγραφεί ο χρήστης «" + u.name + "»" + (days ? " και οι " + days + " καταγεγραμμένες ημέρες του" : "") + "; Δεν υπάρχει επαναφορά.")) return;
+      profiles.users = profiles.users.filter(function (x) { return x.id !== uid; });
+      try { localStorage.removeItem(storeKeyFor(uid)); } catch (err) {}
+      if (profiles.current === uid) {
+        profiles.current = profiles.users[0].id;
+        db = loadDb();
+        refreshAllViews();
+      }
+      persistProfiles();
+      renderUserList();
+      toast("Ο χρήστης διαγράφηκε");
+      return;
+    }
+    var row = e.target.closest("[data-user]");
+    if (row) switchUser(row.dataset.user);
+  });
+
+  $("newUserForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("newUserName").value.trim();
+    if (!name) { $("newUserName").focus(); return; }
+    var exists = profiles.users.some(function (u) { return u.name.toLowerCase() === name.toLowerCase(); });
+    if (exists) { toast("Υπάρχει ήδη χρήστης με αυτό το όνομα"); return; }
+    var id = "u" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+    profiles.users.push({ id: id, name: name });
+    persistProfiles();
+    toast("Δημιουργήθηκε ο χρήστης «" + name + "» ✓");
+    switchUser(id);
   });
 
   /* ---------- Footer ---------- */
@@ -730,6 +899,7 @@
   }
 
   /* ---------- Εκκίνηση ---------- */
+  renderUserButton();
   renderDay();
   updateFootStats();
 })();
