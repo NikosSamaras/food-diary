@@ -1,0 +1,735 @@
+/* ============================================================
+   Ημερολόγιο Καταγραφής Διατροφής
+   Δομή ημέρας βασισμένη στο έντυπο «ΣΥΝΔΥΑΣΜΟΙ ΤΡΟΦΩΝ»:
+   5 γεύματα (3άδες: Πρωινό/Γεύμα/Βραδινό, 2άδες: Προγεύμα/Απογευματινό)
+   + Φυσική δραστηριότητα (είδος, διάρκεια) + νερό + σημειώσεις.
+   Αποθήκευση: localStorage (τοπικά στον browser).
+   ============================================================ */
+(function () {
+  "use strict";
+
+  var STORE_KEY = "imerologio-diatrofis-v1";
+  var THEME_KEY = "imerologio-theme";
+
+  /* ---------- Ορισμός γευμάτων ---------- */
+  var MEALS = [
+    { id: "proino",  name: "Πρωινό",       type: "3άδα", emoji: "🌅",
+      slots: [
+        { id: "fresh",  label: "Φρέσκια τροφή (φρούτα/λαχανικά)", dl: "dl-fresh" },
+        { id: "animal", label: "Ζωική τροφή",                     dl: "dl-animal" },
+        { id: "starch", label: "Άμυλο ή ξηροί καρποί",            dl: "dl-starch" }
+      ]},
+    { id: "progevma", name: "Προγεύμα",    type: "2άδα", emoji: "🍎",
+      slots: [
+        { id: "fruit", label: "Φρέσκα ή ξερά φρούτα", dl: "dl-fruit" },
+        { id: "snack", label: "Snack",                dl: "dl-snack" }
+      ]},
+    { id: "gevma",   name: "Γεύμα",        type: "3άδα", emoji: "☀️",
+      slots: [
+        { id: "fresh",  label: "Φρέσκια τροφή (φρούτα/λαχανικά)", dl: "dl-fresh" },
+        { id: "animal", label: "Ζωική τροφή",                     dl: "dl-animal" },
+        { id: "starch", label: "Άμυλο ή ξηροί καρποί",            dl: "dl-starch" }
+      ]},
+    { id: "apogevmatino", name: "Απογευματινό", type: "2άδα", emoji: "🥨",
+      slots: [
+        { id: "fruit", label: "Φρέσκα ή ξερά φρούτα", dl: "dl-fruit" },
+        { id: "snack", label: "Snack",                dl: "dl-snack" }
+      ]},
+    { id: "vradino", name: "Βραδινό",      type: "3άδα", emoji: "🌙",
+      slots: [
+        { id: "fresh",  label: "Φρέσκια τροφή (φρούτα/λαχανικά)", dl: "dl-fresh" },
+        { id: "animal", label: "Ζωική τροφή",                     dl: "dl-animal" },
+        { id: "starch", label: "Άμυλο ή ξηροί καρποί",            dl: "dl-starch" }
+      ]}
+  ];
+
+  var SLOT_SHORT = { fresh: "Φρέσκια", animal: "Ζωική", starch: "Άμυλο/Ξ.Καρποί", fruit: "Φρούτα", snack: "Snack" };
+
+  /* Προτάσεις αυτόματης συμπλήρωσης */
+  var SUGGESTIONS = {
+    "dl-fresh":  ["Μήλο","Μπανάνα","Πορτοκάλι","Αχλάδι","Φράουλες","Σταφύλι","Καρπούζι","Πεπόνι","Σαλάτα πράσινη","Ντομάτα","Αγγούρι","Μπρόκολο","Καρότο","Κολοκυθάκια","Σπανάκι","Χόρτα","Λάχανο","Παντζάρια","Πιπεριές","Μελιτζάνα"],
+    "dl-animal": ["Κοτόπουλο","Μοσχάρι","Χοιρινό","Ψάρι","Σολομός","Τόνος","Αυγά","Γάλα","Γιαούρτι","Τυρί φέτα","Κασέρι","Κεφίρ","Γαλοπούλα","Γαρίδες","Κιμάς","Cottage"],
+    "dl-starch": ["Ψωμί ολικής","Ρύζι","Μακαρόνια","Πατάτες","Κινόα","Βρώμη","Φακές","Ρεβίθια","Φασόλια","Αμύγδαλα","Καρύδια","Φουντούκια","Κάσιους","Φυστίκια","Παξιμάδι","Κριθαράκι","Πλιγούρι"],
+    "dl-fruit":  ["Μήλο","Μπανάνα","Πορτοκάλι","Αχλάδι","Σταφίδες","Χουρμάδες","Δαμάσκηνα ξερά","Βερίκοκα ξερά","Σύκα ξερά","Φράουλες","Ακτινίδιο","Ροδάκινο"],
+    "dl-snack":  ["Αμύγδαλα","Καρύδια","Φουντούκια","Κάσιους","Μπάρα δημητριακών","Κουλούρι","Κράκερ ολικής","Παξιμαδάκια","Ποπ κορν","Ταχίνι με μέλι"],
+    "dl-activity": ["Περπάτημα","Τρέξιμο","Γυμναστήριο","Ποδήλατο","Κολύμπι","Yoga","Pilates","Χορός","Βάρη","Ποδόσφαιρο","Μπάσκετ","Τένις","Σκάλες","Διατάσεις"],
+    "dl-duration": ["15 λεπτά","20 λεπτά","30 λεπτά","45 λεπτά","1 ώρα","1,5 ώρα","2 ώρες"]
+  };
+
+  var DOW = ["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
+  var DOW_SHORT = ["Κυρ","Δευ","Τρί","Τετ","Πέμ","Παρ","Σάβ"];
+  var MONTHS = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
+
+  /* ---------- Βοηθητικά ---------- */
+  function $(id) { return document.getElementById(id); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function keyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parseKey(k) { var p = k.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function fmtGr(k) { var p = k.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  function todayKey() { return keyOf(new Date()); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  /* ---------- Αποθήκευση ---------- */
+  var db = {};
+  try { db = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { db = {}; }
+
+  function persist() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+    catch (e) { toast("Σφάλμα αποθήκευσης — γεμάτος χώρος browser;"); }
+  }
+  function blankDay() {
+    var d = { meals: {}, activity: { type: "", duration: "" }, water: 0, notes: "" };
+    MEALS.forEach(function (m) {
+      d.meals[m.id] = {};
+      m.slots.forEach(function (s) { d.meals[m.id][s.id] = ""; });
+    });
+    return d;
+  }
+  function getDay(k) { return db[k] || blankDay(); }
+  function dayHasData(d) {
+    if (!d) return false;
+    if ((d.activity && (d.activity.type || d.activity.duration)) || d.water > 0 || (d.notes || "").trim()) return true;
+    for (var m in d.meals) for (var s in d.meals[m]) if ((d.meals[m][s] || "").trim()) return true;
+    return false;
+  }
+  function mealDone(day, meal) {
+    return meal.slots.every(function (s) { return ((day.meals[meal.id] || {})[s.id] || "").trim() !== ""; });
+  }
+  function mealsDoneCount(day) {
+    return MEALS.filter(function (m) { return mealDone(day, m); }).length;
+  }
+  function sortedKeys() { return Object.keys(db).filter(function(k){return dayHasData(db[k]);}).sort(); }
+
+  /* ---------- Κατάσταση ---------- */
+  var currentKey = todayKey();
+  var weekStart = mondayOf(new Date());
+  function mondayOf(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var wd = (x.getDay() + 6) % 7; // Δευτέρα=0
+    x.setDate(x.getDate() - wd);
+    return x;
+  }
+
+  /* ---------- Toast ---------- */
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+  var savedTimer = null;
+  function flashSaved() {
+    var f = $("savedFlag");
+    f.hidden = false;
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(function () { f.hidden = true; }, 1400);
+  }
+
+  /* ---------- Datalists ---------- */
+  Object.keys(SUGGESTIONS).forEach(function (dlId) {
+    var dl = $(dlId);
+    SUGGESTIONS[dlId].forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v;
+      dl.appendChild(o);
+    });
+  });
+
+  /* ---------- Προβολές ---------- */
+  var tabs = $("tabs");
+  tabs.addEventListener("click", function (e) {
+    var b = e.target.closest(".tab");
+    if (!b) return;
+    showView(b.dataset.view);
+  });
+  function showView(name) {
+    document.querySelectorAll(".tab").forEach(function (t) {
+      t.classList.toggle("is-active", t.dataset.view === name);
+    });
+    document.querySelectorAll(".view").forEach(function (v) {
+      v.classList.toggle("is-active", v.id === "view-" + name);
+    });
+    if (name === "week") renderWeek();
+    if (name === "history") renderHistory();
+    if (name === "export") initExportRange();
+    window.scrollTo({ top: 0 });
+  }
+
+  /* ---------- Θέμα ---------- */
+  function applyTheme(t) {
+    if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+  }
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) {}
+  if (savedTheme) applyTheme(savedTheme);
+  else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) applyTheme("dark");
+  $("themeBtn").addEventListener("click", function () {
+    var isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    var next = isDark ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  /* ============================================================
+     ΠΡΟΒΟΛΗ: ΗΜΕΡΑ
+     ============================================================ */
+  function buildMealCards() {
+    var wrap = $("mealCards");
+    wrap.innerHTML = "";
+    MEALS.forEach(function (m) {
+      var card = document.createElement("div");
+      card.className = "card meal-card" + (m.type === "2άδα" ? " duo" : "");
+      card.dataset.meal = m.id;
+      var slotsHtml = m.slots.map(function (s) {
+        return '<label class="slot"><span class="slot-label">' + esc(s.label) + '</span>' +
+          '<input type="text" data-meal="' + m.id + '" data-slot="' + s.id + '" list="' + s.dl + '" autocomplete="off" placeholder="…"></label>';
+      }).join("");
+      card.innerHTML =
+        '<div class="card-head">' +
+          '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(m.name) + '</h2></div>' +
+          '<span class="badge ' + (m.type === "2άδα" ? "duo" : "trio") + '">' + m.type + '</span>' +
+          '<span class="check">✓</span>' +
+        '</div>' +
+        '<div class="slots">' + slotsHtml + '</div>';
+      wrap.appendChild(card);
+    });
+  }
+  buildMealCards();
+
+  /* Νερό */
+  var WATER_MAX = 10;
+  (function buildWater() {
+    var wrap = $("waterDots");
+    for (var i = 1; i <= WATER_MAX; i++) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "wdot";
+      b.dataset.n = i;
+      b.textContent = "💧";
+      b.title = i + (i === 1 ? " ποτήρι" : " ποτήρια");
+      wrap.appendChild(b);
+    }
+    wrap.addEventListener("click", function (e) {
+      var b = e.target.closest(".wdot");
+      if (!b) return;
+      var n = +b.dataset.n;
+      var day = getDay(currentKey);
+      day.water = (day.water === n) ? n - 1 : n;
+      db[currentKey] = day;
+      persist();
+      paintWater(day.water);
+      flashSaved();
+      updateFootStats();
+    });
+    $("waterReset").addEventListener("click", function () {
+      var day = getDay(currentKey);
+      day.water = 0;
+      db[currentKey] = day;
+      persist();
+      paintWater(0);
+    });
+  })();
+  function paintWater(n) {
+    document.querySelectorAll(".wdot").forEach(function (d) {
+      d.classList.toggle("on", +d.dataset.n <= n);
+    });
+  }
+
+  function renderDay() {
+    var day = getDay(currentKey);
+    $("dayPicker").value = currentKey;
+    var d = parseKey(currentKey);
+    var label = DOW[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+    $("dayName").textContent = label + (currentKey === todayKey() ? " · Σήμερα" : "");
+
+    document.querySelectorAll("#mealCards input").forEach(function (inp) {
+      inp.value = (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "";
+    });
+    $("actType").value = day.activity.type || "";
+    $("actDuration").value = day.activity.duration || "";
+    $("dayNotes").value = day.notes || "";
+    paintWater(day.water || 0);
+    updateProgress(day);
+  }
+
+  function updateProgress(day) {
+    var done = mealsDoneCount(day);
+    $("progressFill").style.width = (done / MEALS.length * 100) + "%";
+    $("progressLabel").textContent = done + " από " + MEALS.length + " γεύματα συμπληρωμένα";
+    MEALS.forEach(function (m) {
+      var card = document.querySelector('.meal-card[data-meal="' + m.id + '"]');
+      if (card) card.classList.toggle("done", mealDone(day, m));
+    });
+  }
+
+  /* Αποθήκευση καθώς γράφεις */
+  var saveDebounce = null;
+  function scheduleSave() {
+    clearTimeout(saveDebounce);
+    saveDebounce = setTimeout(saveCurrentDay, 350);
+  }
+  function saveCurrentDay() {
+    var day = getDay(currentKey);
+    document.querySelectorAll("#mealCards input").forEach(function (inp) {
+      if (!day.meals[inp.dataset.meal]) day.meals[inp.dataset.meal] = {};
+      day.meals[inp.dataset.meal][inp.dataset.slot] = inp.value.trim();
+    });
+    day.activity.type = $("actType").value.trim();
+    day.activity.duration = $("actDuration").value.trim();
+    day.notes = $("dayNotes").value;
+    if (dayHasData(day)) db[currentKey] = day;
+    else delete db[currentKey];
+    persist();
+    updateProgress(day);
+    flashSaved();
+    updateFootStats();
+  }
+  ["mealCards"].forEach(function (id) {
+    $(id).addEventListener("input", scheduleSave);
+  });
+  ["actType", "actDuration", "dayNotes"].forEach(function (id) {
+    $(id).addEventListener("input", scheduleSave);
+  });
+
+  /* Πλοήγηση ημέρας */
+  function goToDay(k) {
+    clearTimeout(saveDebounce);
+    saveCurrentDay();
+    currentKey = k;
+    renderDay();
+  }
+  $("dayPicker").addEventListener("change", function () {
+    if (this.value) goToDay(this.value);
+  });
+  $("prevDay").addEventListener("click", function () {
+    var d = parseKey(currentKey); d.setDate(d.getDate() - 1); goToDay(keyOf(d));
+  });
+  $("nextDay").addEventListener("click", function () {
+    var d = parseKey(currentKey); d.setDate(d.getDate() + 1); goToDay(keyOf(d));
+  });
+  $("todayBtn").addEventListener("click", function () { goToDay(todayKey()); });
+  $("clearDay").addEventListener("click", function () {
+    if (!confirm("Να διαγραφούν όλες οι καταχωρήσεις της ημέρας " + fmtGr(currentKey) + ";")) return;
+    delete db[currentKey];
+    persist();
+    renderDay();
+    updateFootStats();
+    toast("Η ημέρα καθαρίστηκε");
+  });
+
+  /* ============================================================
+     ΠΡΟΒΟΛΗ: ΕΒΔΟΜΑΔΑ
+     ============================================================ */
+  function weekKeys(start) {
+    var out = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      out.push(keyOf(d));
+    }
+    return out;
+  }
+  function renderWeek() {
+    var keys = weekKeys(weekStart);
+    var end = parseKey(keys[6]);
+    $("weekLabel").textContent =
+      weekStart.getDate() + " " + MONTHS[weekStart.getMonth()].slice(0, 3) + ". " + weekStart.getFullYear() +
+      " – " + end.getDate() + " " + MONTHS[end.getMonth()].slice(0, 3) + ". " + end.getFullYear();
+
+    var tKey = todayKey();
+    var html = "<thead><tr><th style='min-width:120px'>Γεύμα</th>";
+    keys.forEach(function (k) {
+      var d = parseKey(k);
+      html += "<th" + (k === tKey ? ' class="today-col"' : "") + ">" + DOW_SHORT[d.getDay()] +
+        "<small>" + d.getDate() + "/" + (d.getMonth() + 1) + "</small></th>";
+    });
+    html += "</tr></thead><tbody>";
+
+    MEALS.forEach(function (m) {
+      html += "<tr><th><span class='b'>" + m.emoji + " " + esc(m.name) + "</span>" + m.type + "</th>";
+      keys.forEach(function (k) {
+        var day = db[k];
+        var cell = "";
+        if (day && day.meals && day.meals[m.id]) {
+          cell = m.slots.map(function (s) {
+            var v = (day.meals[m.id][s.id] || "").trim();
+            return v ? "<span class='l'>" + esc(SLOT_SHORT[s.id]) + ":</span>" + esc(v) : "";
+          }).filter(Boolean).join("<br>");
+        }
+        html += "<td data-day='" + k + "'" + (k === tKey ? ' class="today-col"' : "") + ">" + (cell || "&nbsp;") + "</td>";
+      });
+      html += "</tr>";
+    });
+
+    // Φυσική δραστηριότητα
+    html += "<tr><th><span class='b'>🏃 Φυσική Δραστ.</span>Είδος/Διάρκεια</th>";
+    keys.forEach(function (k) {
+      var day = db[k], cell = "";
+      if (day && day.activity && (day.activity.type || day.activity.duration)) {
+        cell = esc(day.activity.type || "—") + (day.activity.duration ? "<br><span class='l'>" + esc(day.activity.duration) + "</span>" : "");
+      }
+      html += "<td data-day='" + k + "'>" + (cell || "&nbsp;") + "</td>";
+    });
+    html += "</tr></tbody>";
+    $("weekGrid").innerHTML = html;
+  }
+  $("weekGrid").addEventListener("click", function (e) {
+    var td = e.target.closest("td[data-day]");
+    if (!td) return;
+    goToDay(td.dataset.day);
+    showView("day");
+  });
+  $("prevWeek").addEventListener("click", function () {
+    weekStart.setDate(weekStart.getDate() - 7); renderWeek();
+  });
+  $("nextWeek").addEventListener("click", function () {
+    weekStart.setDate(weekStart.getDate() + 7); renderWeek();
+  });
+  $("thisWeekBtn").addEventListener("click", function () {
+    weekStart = mondayOf(new Date()); renderWeek();
+  });
+  $("weekXlsx").addEventListener("click", function () {
+    var keys = weekKeys(weekStart);
+    exportCalendarXlsx(keys[0], keys[6], "εβδομάδα");
+  });
+
+  /* ============================================================
+     ΠΡΟΒΟΛΗ: ΙΣΤΟΡΙΚΟ
+     ============================================================ */
+  function dayMatches(day, q) {
+    if (!q) return true;
+    q = q.toLowerCase();
+    var parts = [];
+    for (var m in day.meals) for (var s in day.meals[m]) parts.push(day.meals[m][s] || "");
+    parts.push(day.activity.type || "", day.activity.duration || "", day.notes || "");
+    return parts.join(" ").toLowerCase().indexOf(q) !== -1;
+  }
+
+  function renderHistory() {
+    var keys = sortedKeys().reverse();
+    var q = $("historySearch").value.trim();
+    var month = $("historyMonth").value;
+
+    // Επιλογές μηνών
+    var months = {};
+    keys.forEach(function (k) { months[k.slice(0, 7)] = true; });
+    var sel = $("historyMonth");
+    var cur = sel.value;
+    sel.innerHTML = "<option value=''>Όλοι οι μήνες</option>";
+    Object.keys(months).sort().reverse().forEach(function (mk) {
+      var p = mk.split("-");
+      var o = document.createElement("option");
+      o.value = mk;
+      o.textContent = MONTHS[+p[1] - 1] + " " + p[0];
+      sel.appendChild(o);
+    });
+    sel.value = cur && months[cur] ? cur : (month && months[month] ? month : "");
+    month = sel.value;
+
+    var filtered = keys.filter(function (k) {
+      if (month && k.slice(0, 7) !== month) return false;
+      return dayMatches(db[k], q);
+    });
+
+    // Στατιστικά
+    var total = filtered.length;
+    var full = 0, actDays = 0, waterSum = 0;
+    filtered.forEach(function (k) {
+      var d = db[k];
+      if (mealsDoneCount(d) === MEALS.length) full++;
+      if (d.activity && (d.activity.type || "").trim()) actDays++;
+      waterSum += d.water || 0;
+    });
+    var streak = calcStreak();
+    $("historyStats").innerHTML =
+      stat(total, "καταγεγραμμένες ημέρες") +
+      stat(full, "πλήρεις ημέρες (5/5)") +
+      stat(actDays, "ημέρες με δραστηριότητα") +
+      stat(total ? (waterSum / total).toFixed(1) : "0", "μ.ό. ποτήρια νερό") +
+      stat(streak, "σερί ημερών 🔥");
+
+    var list = $("historyList");
+    if (!filtered.length) {
+      list.innerHTML = "<div class='empty'>Δεν υπάρχουν καταγραφές" + (q || month ? " με αυτά τα φίλτρα" : " ακόμη") + ".<br>Ξεκίνα από την καρτέλα «Ημέρα»! 🍽️</div>";
+      return;
+    }
+    list.innerHTML = filtered.map(function (k) {
+      var d = db[k];
+      var date = parseKey(k);
+      var pips = MEALS.map(function (m) {
+        return "<span class='hpip" + (mealDone(d, m) ? " on" : "") + "' title='" + esc(m.name) + "'>" + m.emoji + "</span>";
+      }).join("");
+      var rows = MEALS.map(function (m) {
+        var vals = m.slots.map(function (s) {
+          var v = (d.meals[m.id] || {})[s.id] || "";
+          return v ? "<span class='part'><b>" + esc(SLOT_SHORT[s.id]) + ":</b> " + esc(v) + "</span>" : "";
+        }).filter(Boolean).join("");
+        return vals ? "<div class='hrow'><span class='hm'>" + m.emoji + " " + esc(m.name) + "</span><span class='hv'>" + vals + "</span></div>" : "";
+      }).filter(Boolean).join("");
+      var extra = "";
+      if (d.activity && (d.activity.type || d.activity.duration)) {
+        extra += "<div class='hrow'><span class='hm'>🏃 Δραστηριότητα</span><span class='hv'>" +
+          esc(d.activity.type || "—") + (d.activity.duration ? " · " + esc(d.activity.duration) : "") + "</span></div>";
+      }
+      if (d.water) extra += "<div class='hrow'><span class='hm'>💧 Νερό</span><span class='hv'>" + d.water + " ποτήρια</span></div>";
+      if ((d.notes || "").trim()) extra += "<div class='hrow'><span class='hm'>📝 Σημειώσεις</span><span class='hv'>" + esc(d.notes) + "</span></div>";
+      return "<details class='hday'><summary>" +
+        "<span class='hdate'>" + fmtGr(k) + "</span>" +
+        "<span class='hdow'>" + DOW[date.getDay()] + "</span>" +
+        "<span class='hmeals'>" + pips + "</span></summary>" +
+        "<div class='hbody'>" + (rows + extra || "<p class='hint'>Κενή ημέρα</p>") +
+        "<div class='hactions'><button class='ghost-btn tiny' data-edit='" + k + "'>✏️ Επεξεργασία</button></div>" +
+        "</div></details>";
+    }).join("");
+  }
+  function stat(v, k) { return "<div class='stat'><div class='v'>" + v + "</div><div class='k'>" + k + "</div></div>"; }
+  function calcStreak() {
+    var n = 0;
+    var d = new Date();
+    if (!dayHasData(db[keyOf(d)])) d.setDate(d.getDate() - 1); // το σήμερα δεν σπάει το σερί αν δεν έχει συμπληρωθεί ακόμη
+    while (dayHasData(db[keyOf(d)])) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+  $("historySearch").addEventListener("input", renderHistory);
+  $("historyMonth").addEventListener("change", renderHistory);
+  $("historyList").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-edit]");
+    if (!b) return;
+    goToDay(b.dataset.edit);
+    showView("day");
+  });
+
+  /* ============================================================
+     ΕΞΑΓΩΓΗ
+     ============================================================ */
+  function initExportRange() {
+    var keys = sortedKeys();
+    if (!$("expFrom").value) $("expFrom").value = keys.length ? keys[0] : todayKey();
+    if (!$("expTo").value) $("expTo").value = keys.length ? keys[keys.length - 1] : todayKey();
+  }
+  $("rangeAll").addEventListener("click", function () {
+    var keys = sortedKeys();
+    $("expFrom").value = keys.length ? keys[0] : todayKey();
+    $("expTo").value = keys.length ? keys[keys.length - 1] : todayKey();
+  });
+  $("rangeMonth").addEventListener("click", function () {
+    var d = new Date();
+    $("expFrom").value = keyOf(new Date(d.getFullYear(), d.getMonth(), 1));
+    $("expTo").value = keyOf(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  });
+  function rangeKeys() {
+    var from = $("expFrom").value || "0000-00-00";
+    var to = $("expTo").value || "9999-99-99";
+    if (from > to) { var t = from; from = to; to = t; }
+    return sortedKeys().filter(function (k) { return k >= from && k <= to; });
+  }
+  function requireData(keys) {
+    if (!keys.length) { toast("Δεν υπάρχουν καταγραφές σε αυτό το εύρος."); return false; }
+    return true;
+  }
+
+  /* --- Excel: αναλυτικός πίνακας (μία γραμμή ανά ημέρα) --- */
+  function exportDetailXlsx() {
+    var keys = rangeKeys();
+    if (!requireData(keys)) return;
+    var head = ["Ημερομηνία", "Ημέρα"];
+    MEALS.forEach(function (m) {
+      m.slots.forEach(function (s) { head.push(m.name + " — " + SLOT_SHORT[s.id]); });
+    });
+    head.push("Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό (ποτήρια)", "Σημειώσεις");
+    var rows = [head.map(function (h) { return { v: h, s: "head" }; })];
+    keys.forEach(function (k) {
+      var d = db[k];
+      var row = [{ v: fmtGr(k), s: "bold" }, DOW[parseKey(k).getDay()]];
+      MEALS.forEach(function (m) {
+        m.slots.forEach(function (s) { row.push((d.meals[m.id] || {})[s.id] || ""); });
+      });
+      row.push(d.activity.type || "", d.activity.duration || "", d.water || 0, d.notes || "");
+      rows.push(row);
+    });
+    var cols = [12, 12];
+    for (var i = 2; i < head.length; i++) cols.push(20);
+    MiniXLSX.download("Ημερολόγιο_Διατροφής_" + keys[0] + "_" + keys[keys.length - 1] + ".xlsx",
+      [{ name: "Ημερολόγιο", cols: cols, rows: rows }]);
+    toast("Το Excel κατέβηκε ✓");
+  }
+
+  /* --- Excel: μορφή ημερολογίου (σαν το έντυπο, ένα φύλλο/εβδομάδα) --- */
+  function exportCalendarXlsx(fromKey, toKey, labelWord) {
+    var from = fromKey, to = toKey;
+    if (!from) { var ks = rangeKeys(); if (!requireData(ks)) return; from = ks[0]; to = ks[ks.length - 1]; }
+    var start = mondayOf(parseKey(from));
+    var endD = parseKey(to);
+    var sheets = [];
+    while (start <= endD) {
+      var keys = weekKeys(start);
+      var anyData = keys.some(function (k) { return dayHasData(db[k]); });
+      if (anyData || fromKey) {
+        var rows = [];
+        var head = [{ v: "ΣΥΝΔΥΑΣΜΟΙ ΤΡΟΦΩΝ", s: "head" }, { v: "", s: "head" }];
+        keys.forEach(function (k) { head.push({ v: fmtGr(k), s: "head" }); });
+        rows.push(head);
+        var dowRow = [{ v: "", s: "label" }, { v: "", s: "label" }];
+        keys.forEach(function (k) { dowRow.push({ v: DOW[parseKey(k).getDay()].toUpperCase(), s: "label" }); });
+        rows.push(dowRow);
+        MEALS.forEach(function (m) {
+          var r = [{ v: m.type.toUpperCase(), s: "label" }, { v: m.name.toUpperCase(), s: "label" }];
+          keys.forEach(function (k) {
+            var d = db[k];
+            var txt = "";
+            if (d && d.meals[m.id]) {
+              txt = m.slots.map(function (s) {
+                var v = (d.meals[m.id][s.id] || "").trim();
+                return v ? SLOT_SHORT[s.id] + ": " + v : "";
+              }).filter(Boolean).join("\n");
+            }
+            r.push({ v: txt, s: "wrap" });
+          });
+          rows.push(r);
+        });
+        var actRow = [{ v: "", s: "label" }, { v: "ΦΥΣΙΚΗ ΔΡΑΣΤΗΡΙΟΤΗΤΑ", s: "label" }];
+        keys.forEach(function (k) {
+          var d = db[k], txt = "";
+          if (d && d.activity && (d.activity.type || d.activity.duration)) {
+            txt = "ΕΙΔΟΣ: " + (d.activity.type || "—") + "\nΔΙΑΡΚΕΙΑ: " + (d.activity.duration || "—");
+          }
+          actRow.push({ v: txt, s: "wrap" });
+        });
+        rows.push(actRow);
+        var waterRow = [{ v: "", s: "label" }, { v: "ΝΕΡΟ (ΠΟΤΗΡΙΑ)", s: "label" }];
+        keys.forEach(function (k) { waterRow.push(db[k] ? (db[k].water || "") : ""); });
+        rows.push(waterRow);
+        var notesRow = [{ v: "", s: "label" }, { v: "ΣΗΜΕΙΩΣΕΙΣ", s: "label" }];
+        keys.forEach(function (k) { notesRow.push({ v: db[k] ? (db[k].notes || "") : "", s: "wrap" }); });
+        rows.push(notesRow);
+
+        var d0 = keys[0].split("-");
+        sheets.push({
+          name: "Εβδ " + d0[2] + "." + d0[1] + "." + d0[0].slice(2),
+          cols: [10, 18, 24, 24, 24, 24, 24, 24, 24],
+          rows: rows,
+          merges: ["A1:B1"]
+        });
+      }
+      start = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+    }
+    if (!sheets.length) { toast("Δεν υπάρχουν καταγραφές σε αυτό το εύρος."); return; }
+    MiniXLSX.download("Ημερολόγιο_" + (labelWord || "ημερολόγιο") + "_" + from + "_" + to + ".xlsx", sheets);
+    toast("Το Excel κατέβηκε ✓");
+  }
+
+  /* --- CSV --- */
+  function exportCsv() {
+    var keys = rangeKeys();
+    if (!requireData(keys)) return;
+    function q(s) { return '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"'; }
+    var head = ["Ημερομηνία", "Ημέρα"];
+    MEALS.forEach(function (m) {
+      m.slots.forEach(function (s) { head.push(m.name + " - " + SLOT_SHORT[s.id]); });
+    });
+    head.push("Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό", "Σημειώσεις");
+    var lines = [head.map(q).join(";")];
+    keys.forEach(function (k) {
+      var d = db[k];
+      var row = [fmtGr(k), DOW[parseKey(k).getDay()]];
+      MEALS.forEach(function (m) {
+        m.slots.forEach(function (s) { row.push((d.meals[m.id] || {})[s.id] || ""); });
+      });
+      row.push(d.activity.type || "", d.activity.duration || "", d.water || 0, d.notes || "");
+      lines.push(row.map(q).join(";"));
+    });
+    // BOM ώστε το Excel να διαβάσει σωστά τα ελληνικά· ";" ως διαχωριστικό για ελληνικές τοπικές ρυθμίσεις
+    var blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "Ημερολόγιο_Διατροφής_" + keys[0] + "_" + keys[keys.length - 1] + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+    toast("Το CSV κατέβηκε ✓");
+  }
+
+  /* --- JSON backup / restore --- */
+  function exportJson() {
+    var blob = new Blob([JSON.stringify({ app: "imerologio-diatrofis", version: 1, exported: new Date().toISOString(), data: db }, null, 2)],
+      { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "imerologio-backup-" + todayKey() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+    toast("Το αντίγραφο κατέβηκε ✓");
+  }
+  $("impJsonBtn").addEventListener("click", function () { $("impJson").click(); });
+  $("impJson").addEventListener("change", function () {
+    var f = this.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var obj = JSON.parse(reader.result);
+        var data = obj && obj.data ? obj.data : obj;
+        if (typeof data !== "object" || Array.isArray(data)) throw new Error("bad");
+        var count = 0;
+        Object.keys(data).forEach(function (k) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && data[k] && data[k].meals) { db[k] = data[k]; count++; }
+        });
+        persist();
+        renderDay();
+        updateFootStats();
+        $("importMsg").textContent = "Εισήχθησαν " + count + " ημέρες ✓";
+        toast("Η εισαγωγή ολοκληρώθηκε ✓");
+      } catch (e) {
+        $("importMsg").textContent = "Μη έγκυρο αρχείο αντιγράφου.";
+        toast("Μη έγκυρο αρχείο");
+      }
+      $("impJson").value = "";
+    };
+    reader.readAsText(f);
+  });
+
+  /* --- Εκτύπωση --- */
+  function printHistory() {
+    showView("history");
+    $("view-history").classList.add("print-target");
+    document.querySelectorAll("#historyList details").forEach(function (d) { d.open = true; });
+    setTimeout(function () {
+      window.print();
+      $("view-history").classList.remove("print-target");
+    }, 150);
+  }
+
+  $("expXlsx").addEventListener("click", exportDetailXlsx);
+  $("expXlsxWeeks").addEventListener("click", function () { exportCalendarXlsx(null, null, "ημερολόγιο"); });
+  $("expCsv").addEventListener("click", exportCsv);
+  $("expJson").addEventListener("click", exportJson);
+  $("expPrint").addEventListener("click", printHistory);
+
+  $("wipeAll").addEventListener("click", function () {
+    if (!confirm("ΠΡΟΣΟΧΗ: Θα διαγραφούν ΟΛΕΣ οι καταγραφές οριστικά. Συνέχεια;")) return;
+    if (!confirm("Σίγουρα; Δεν υπάρχει επαναφορά (εκτός αν έχεις αντίγραφο .json).")) return;
+    db = {};
+    persist();
+    renderDay();
+    renderHistory();
+    updateFootStats();
+    toast("Όλα τα δεδομένα διαγράφηκαν");
+  });
+
+  /* ---------- Footer ---------- */
+  function updateFootStats() {
+    var keys = sortedKeys();
+    $("footStats").textContent = keys.length
+      ? keys.length + " καταγεγραμμένες ημέρες · πρώτη: " + fmtGr(keys[0])
+      : "Καμία καταγραφή ακόμη";
+  }
+
+  /* ---------- Εκκίνηση ---------- */
+  renderDay();
+  updateFootStats();
+})();

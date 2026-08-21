@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ημερολόγιο Καταγραφής Διατροφής</title>
+<meta name="description" content="Καθημερινή καταγραφή γευμάτων με σωστούς συνδυασμούς τροφών, ιστορικό και εξαγωγή σε Excel.">
+<meta name="theme-color" content="#2f7d63">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">🍽️</span>
+    <span class="brand-text">
+      <strong>Ημερολόγιο Καταγραφής</strong>
+      <small>Συνδυασμοί Τροφών</small>
+    </span>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Πλοήγηση">
+    <button class="tab is-active" data-view="day">Ημέρα</button>
+    <button class="tab" data-view="week">Εβδομάδα</button>
+    <button class="tab" data-view="history">Ιστορικό</button>
+    <button class="tab" data-view="guide">Οδηγός</button>
+    <button class="tab" data-view="export">Εξαγωγή</button>
+  </nav>
+  <button class="icon-btn" id="themeBtn" title="Εναλλαγή θέματος" aria-label="Εναλλαγή θέματος">◐</button>
+</header>
+
+<main>
+
+  <!-- ============ ΗΜΕΡΑ ============ -->
+  <section class="view is-active" id="view-day">
+    <div class="daybar">
+      <button class="nav-btn" id="prevDay" aria-label="Προηγούμενη ημέρα">‹</button>
+      <div class="daybar-center">
+        <input type="date" id="dayPicker" aria-label="Ημερομηνία">
+        <div class="dayname" id="dayName">—</div>
+      </div>
+      <button class="nav-btn" id="nextDay" aria-label="Επόμενη ημέρα">›</button>
+      <button class="ghost-btn" id="todayBtn">Σήμερα</button>
+    </div>
+
+    <div class="dayprogress">
+      <div class="bar"><span id="progressFill"></span></div>
+      <div class="bar-label" id="progressLabel">0 από 5 γεύματα συμπληρωμένα</div>
+      <div class="saved" id="savedFlag" hidden>Αποθηκεύτηκε ✓</div>
+    </div>
+
+    <div id="mealCards" class="cards"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Φυσική Δραστηριότητα</h2>
+      </div>
+      <div class="slots">
+        <label class="slot">
+          <span class="slot-label">Είδος</span>
+          <input type="text" id="actType" list="dl-activity" placeholder="π.χ. περπάτημα, γυμναστήριο…" autocomplete="off">
+        </label>
+        <label class="slot">
+          <span class="slot-label">Διάρκεια</span>
+          <input type="text" id="actDuration" list="dl-duration" placeholder="π.χ. 45 λεπτά" autocomplete="off">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Νερό &amp; Σημειώσεις</h2>
+      </div>
+      <div class="water">
+        <span class="slot-label">Ποτήρια νερό</span>
+        <div class="water-dots" id="waterDots"></div>
+        <button class="ghost-btn tiny" id="waterReset">Μηδενισμός</button>
+      </div>
+      <label class="slot">
+        <span class="slot-label">Σημειώσεις ημέρας</span>
+        <textarea id="dayNotes" rows="3" placeholder="Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…"></textarea>
+      </label>
+    </div>
+
+    <div class="day-actions">
+      <button class="danger-btn" id="clearDay">Καθαρισμός ημέρας</button>
+    </div>
+  </section>
+
+  <!-- ============ ΕΒΔΟΜΑΔΑ ============ -->
+  <section class="view" id="view-week">
+    <div class="daybar">
+      <button class="nav-btn" id="prevWeek" aria-label="Προηγούμενη εβδομάδα">‹</button>
+      <div class="daybar-center">
+        <div class="dayname" id="weekLabel">—</div>
+      </div>
+      <button class="nav-btn" id="nextWeek" aria-label="Επόμενη εβδομάδα">›</button>
+      <button class="ghost-btn" id="thisWeekBtn">Τρέχουσα</button>
+    </div>
+    <p class="hint">Πάτησε σε οποιοδήποτε κελί για να επεξεργαστείς εκείνη την ημέρα.</p>
+    <div class="table-wrap">
+      <table class="weekgrid" id="weekGrid"></table>
+    </div>
+    <div class="week-export">
+      <button class="primary-btn" id="weekXlsx">Εξαγωγή εβδομάδας σε Excel</button>
+    </div>
+  </section>
+
+  <!-- ============ ΙΣΤΟΡΙΚΟ ============ -->
+  <section class="view" id="view-history">
+    <div class="history-tools">
+      <input type="search" id="historySearch" placeholder="Αναζήτηση τροφής, δραστηριότητας, σημείωσης…">
+      <select id="historyMonth"><option value="">Όλοι οι μήνες</option></select>
+    </div>
+    <div id="historyStats" class="stats"></div>
+    <div id="historyList" class="history"></div>
+  </section>
+
+  <!-- ============ ΟΔΗΓΟΣ ============ -->
+  <section class="view" id="view-guide">
+    <div class="card guide-card">
+      <h2>Πώς δουλεύει</h2>
+      <p>Κάθε ημέρα έχει <strong>5 γεύματα</strong>. Τα κύρια γεύματα είναι <strong>3άδες</strong> και τα ενδιάμεσα <strong>2άδες</strong>.</p>
+      <div class="combo">
+        <div class="combo-box">
+          <h3>3άδα <small>Πρωινό · Γεύμα · Βραδινό</small></h3>
+          <ul>
+            <li>1 μερίδα <strong>φρέσκιας τροφής</strong> (φρούτα ή λαχανικά)</li>
+            <li>1 μερίδα <strong>ζωικής τροφής</strong></li>
+            <li>1 μερίδα <strong>αμύλου ή ξηρών καρπών</strong></li>
+          </ul>
+        </div>
+        <div class="combo-box">
+          <h3>2άδα <small>Προγεύμα · Απογευματινό</small></h3>
+          <ul>
+            <li>Φρέσκα ή ξερά <strong>φρούτα</strong></li>
+            <li>Ένα <strong>snack</strong> (ξηροί καρποί, κράκερ, κουλούρι…)</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">Για παιδιά, εφήβους και αθλητές, προτείνεται μια έξτρα μερίδα ζωικής τροφής κατά τη διάρκεια της ημέρας.</p>
+      <p class="note strong">Εφαρμόζετε πάντα τους σωστούς συνδυασμούς σε κάθε κουτάκι, ανάλογα με τις 3άδες ή τις 2άδες κάθε γεύματος.</p>
+    </div>
+    <div class="guide-images">
+      <img src="assets/odigos-1.png" alt="Οδηγός συνδυασμών τροφών: πιάτο 3άδας και 2άδας">
+      <img src="assets/odigos-2.png" alt="Οδηγός συνδυασμών τροφών: πρωινό και κύριο γεύμα">
+    </div>
+  </section>
+
+  <!-- ============ ΕΞΑΓΩΓΗ ============ -->
+  <section class="view" id="view-export">
+    <div class="card">
+      <div class="card-head"><h2>Εξαγωγή σε Excel</h2></div>
+      <p class="hint">Διάλεξε εύρος ημερομηνιών και κατέβασε αρχείο <code>.xlsx</code> που ανοίγει απευθείας στο Excel.</p>
+      <div class="range">
+        <label class="slot"><span class="slot-label">Από</span><input type="date" id="expFrom"></label>
+        <label class="slot"><span class="slot-label">Έως</span><input type="date" id="expTo"></label>
+        <button class="ghost-btn tiny" id="rangeAll">Όλα</button>
+        <button class="ghost-btn tiny" id="rangeMonth">Τρέχων μήνας</button>
+      </div>
+      <div class="export-actions">
+        <button class="primary-btn" id="expXlsx">📊 Excel — αναλυτικός πίνακας</button>
+        <button class="primary-btn" id="expXlsxWeeks">📅 Excel — μορφή ημερολογίου</button>
+        <button class="ghost-btn" id="expCsv">CSV (.csv)</button>
+        <button class="ghost-btn" id="expPrint">Εκτύπωση / PDF</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Αντίγραφο ασφαλείας</h2></div>
+      <p class="hint">Τα δεδομένα αποθηκεύονται τοπικά στον browser σου. Κράτα αντίγραφο ή μετέφερέ τα σε άλλη συσκευή.</p>
+      <div class="export-actions">
+        <button class="ghost-btn" id="expJson">⬇ Λήψη αντιγράφου (.json)</button>
+        <button class="ghost-btn" id="impJsonBtn">⬆ Εισαγωγή αντιγράφου</button>
+        <input type="file" id="impJson" accept="application/json,.json" hidden>
+      </div>
+      <div id="importMsg" class="hint"></div>
+    </div>
+
+    <div class="card danger-card">
+      <div class="card-head"><h2>Διαγραφή όλων</h2></div>
+      <p class="hint">Σβήνει οριστικά όλες τις καταγραφές από αυτόν τον browser.</p>
+      <button class="danger-btn" id="wipeAll">Διαγραφή όλων των δεδομένων</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span id="footStats">—</span>
+  <span>Τα δεδομένα μένουν στη συσκευή σου.</span>
+</footer>
+
+<datalist id="dl-fresh"></datalist>
+<datalist id="dl-animal"></datalist>
+<datalist id="dl-starch"></datalist>
+<datalist id="dl-fruit"></datalist>
+<datalist id="dl-snack"></datalist>
+<datalist id="dl-activity"></datalist>
+<datalist id="dl-duration"></datalist>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="xlsx.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
