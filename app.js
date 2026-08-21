@@ -67,6 +67,10 @@
   function keyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function parseKey(k) { var p = k.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function fmtGr(k) { var p = k.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  var GR_UP = { "Ά": "Α", "Έ": "Ε", "Ή": "Η", "Ί": "Ι", "Ό": "Ο", "Ύ": "Υ", "Ώ": "Ω" };
+  function grUpper(s) { // ελληνικά κεφαλαία χωρίς τόνους, όπως στο έντυπο
+    return String(s || "").toUpperCase().replace(/[ΆΈΉΊΌΎΏ]/g, function (c) { return GR_UP[c]; });
+  }
   function todayKey() { return keyOf(new Date()); }
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -631,7 +635,9 @@
     toast("Το Excel κατέβηκε ✓");
   }
 
-  /* --- Excel: μορφή ημερολογίου (σαν το έντυπο, ένα φύλλο/εβδομάδα) --- */
+  /* --- Excel: μορφή ημερολογίου — πιστή αναπαραγωγή του εντύπου Word «ΣΥΝΔΥΑΣΜΟΙ ΤΡΟΦΩΝ» --- */
+  var MEAL_XSTYLE = { proino: "vProino", progevma: "vDuo", gevma: "vGevma", apogevmatino: "vDuo", vradino: "vVradino" };
+  var FORM_NOTE = "ΕΦΑΡΜΟΖΕΤΕ ΠΑΝΤΑ ΤΟΥΣ ΣΩΣΤΟΥΣ ΣΥΝΔΥΑΣΜΟΥΣ ΣΕ ΚΑΘΕ ΚΟΥΤΑΚΙ ΑΝΑΛΟΓΑ ΜΕ ΤΙΣ 3ΑΔΕΣ Ή ΤΙΣ 2ΑΔΕΣ ΚΑΘΕ ΓΕΥΜΑΤΟΣ";
   function exportCalendarXlsx(fromKey, toKey, labelWord) {
     var from = fromKey, to = toKey;
     if (!from) { var ks = rangeKeys(); if (!requireData(ks)) return; from = ks[0]; to = ks[ks.length - 1]; }
@@ -642,53 +648,71 @@
       var keys = weekKeys(start);
       var anyData = keys.some(function (k) { return dayHasData(db[k]); });
       if (anyData || fromKey) {
-        var rows = [];
-        var head = [{ v: "ΣΥΝΔΥΑΣΜΟΙ ΤΡΟΦΩΝ", s: "head" }, { v: "", s: "head" }];
-        keys.forEach(function (k) { head.push({ v: fmtGr(k), s: "head" }); });
-        rows.push(head);
-        var dowRow = [{ v: "", s: "label" }, { v: "", s: "label" }];
-        keys.forEach(function (k) { dowRow.push({ v: DOW[parseKey(k).getDay()].toUpperCase(), s: "label" }); });
-        rows.push(dowRow);
+        var rows = [], heights = [];
+
+        // Γρ.1-2: τίτλος (συγχώνευση A1:B2) + ημερομηνίες + ημέρες (ΚΥΡΙΑΚΗ ροζ όπως στο έντυπο)
+        var r1 = [{ v: "ΣΥΝΔΥΑΣΜΟΙ ΤΡΟΦΩΝ", s: "title" }, { v: "", s: "title" }];
+        keys.forEach(function (k) { r1.push({ v: fmtGr(k), s: "date" }); });
+        rows.push(r1); heights.push(24);
+        var r2 = [{ v: "", s: "title" }, { v: "", s: "title" }];
+        keys.forEach(function (k, i) {
+          r2.push({ v: grUpper(DOW[parseKey(k).getDay()]), s: i === 6 ? "dowSun" : "dow" });
+        });
+        rows.push(r2); heights.push(22);
+
+        // Γρ.3-7: γεύματα — 3ΑΔΑ/2ΑΔΕΣ, κάθετο χρωματιστό όνομα γεύματος, 7 κουτάκια ημερών
         MEALS.forEach(function (m) {
-          var r = [{ v: m.type.toUpperCase(), s: "label" }, { v: m.name.toUpperCase(), s: "label" }];
+          var r = [
+            { v: m.type === "2άδα" ? "2ΑΔΕΣ" : "3ΑΔΑ", s: "mealtag" },
+            { v: grUpper(m.name), s: MEAL_XSTYLE[m.id] }
+          ];
           keys.forEach(function (k) {
-            var d = db[k];
-            var txt = "";
-            if (d && d.meals[m.id]) {
-              var lines = m.slots.map(function (s) {
-                var v = (d.meals[m.id][s.id] || "").trim();
-                return v ? SLOT_SHORT[s.id] + ": " + v : "";
-              }).filter(Boolean);
+            var d = db[k], lines = [];
+            if (d) {
               var tm = ((d.times || {})[m.id] || "").trim();
-              if (tm) lines.unshift("Ώρα: " + tm);
-              txt = lines.join("\n");
+              if (tm) lines.push("Ώρα: " + tm);
+              if (d.meals && d.meals[m.id]) {
+                m.slots.forEach(function (s) {
+                  var v = (d.meals[m.id][s.id] || "").trim();
+                  if (v) lines.push(SLOT_SHORT[s.id] + ": " + v);
+                });
+              }
             }
-            r.push({ v: txt, s: "wrap" });
+            r.push({ v: lines.join("\n"), s: "cell" });
           });
           rows.push(r);
+          heights.push(m.type === "2άδα" ? 58 : 76);
         });
-        var actRow = [{ v: "", s: "label" }, { v: "ΦΥΣΙΚΗ ΔΡΑΣΤΗΡΙΟΤΗΤΑ", s: "label" }];
+
+        // Γρ.8-9: σημείωση εντύπου (A8:B9) + ΦΥΣΙΚΗ ΔΡΑΣΤΗΡΙΟΤΗΤΑ με ΕΙΔΟΣ/ΔΙΑΡΚΕΙΑ
+        var r8 = [{ v: FORM_NOTE, s: "note" }, { v: "", s: "note" }];
+        keys.forEach(function () { r8.push({ v: "ΦΥΣΙΚΗ ΔΡΑΣΤΗΡΙΟΤΗΤΑ", s: "acthead" }); });
+        rows.push(r8); heights.push(16);
+        var r9 = [{ v: "", s: "note" }, { v: "", s: "note" }];
         keys.forEach(function (k) {
-          var d = db[k], txt = "";
-          if (d && d.activity && (d.activity.type || d.activity.duration)) {
-            txt = "ΕΙΔΟΣ: " + (d.activity.type || "—") + "\nΔΙΑΡΚΕΙΑ: " + (d.activity.duration || "—");
-          }
-          actRow.push({ v: txt, s: "wrap" });
+          var d = db[k];
+          var t = (d && d.activity && d.activity.type) || "";
+          var du = (d && d.activity && d.activity.duration) || "";
+          r9.push({ v: "ΕΙΔΟΣ: " + t + "\nΔΙΑΡΚΕΙΑ: " + du, s: "cell" });
         });
-        rows.push(actRow);
-        var waterRow = [{ v: "", s: "label" }, { v: "ΝΕΡΟ (ΠΟΤΗΡΙΑ)", s: "label" }];
-        keys.forEach(function (k) { waterRow.push(db[k] ? (db[k].water || "") : ""); });
-        rows.push(waterRow);
-        var notesRow = [{ v: "", s: "label" }, { v: "ΣΗΜΕΙΩΣΕΙΣ", s: "label" }];
-        keys.forEach(function (k) { notesRow.push({ v: db[k] ? (db[k].notes || "") : "", s: "wrap" }); });
-        rows.push(notesRow);
+        rows.push(r9); heights.push(42);
+
+        // Γρ.10-11: νερό & σημειώσεις (δικά μας πεδία, στο ίδιο ύφος)
+        var r10 = [{ v: "ΝΕΡΟ (ΠΟΤΗΡΙΑ)", s: "mealtag" }, { v: "", s: "mealtag" }];
+        keys.forEach(function (k) { r10.push({ v: db[k] ? (db[k].water || "") : "", s: "cell" }); });
+        rows.push(r10); heights.push(20);
+        var r11 = [{ v: "ΣΗΜΕΙΩΣΕΙΣ", s: "mealtag" }, { v: "", s: "mealtag" }];
+        keys.forEach(function (k) { r11.push({ v: db[k] ? (db[k].notes || "") : "", s: "cell" }); });
+        rows.push(r11); heights.push(38);
 
         var d0 = keys[0].split("-");
         sheets.push({
           name: "Εβδ " + d0[2] + "." + d0[1] + "." + d0[0].slice(2),
-          cols: [10, 18, 24, 24, 24, 24, 24, 24, 24],
+          cols: [15, 4.5, 18, 18, 18, 18, 18, 18, 18],
           rows: rows,
-          merges: ["A1:B1"]
+          heights: heights,
+          merges: ["A1:B2", "A8:B9", "A10:B10", "A11:B11"],
+          landscape: true
         });
       }
       start = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
