@@ -1,0 +1,19 @@
+{
+  "name": "Ημερολόγιο Καταγραφής Διατροφής",
+  "short_name": "Ημερολόγιο",
+  "description": "Καθημερινή καταγραφή γευμάτων με σωστούς συνδυασμούς τροφών, ιστορικό και εξαγωγή σε Excel.",
+  "lang": "el",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f3f6f4",
+  "theme_color": "#2f7d63",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
