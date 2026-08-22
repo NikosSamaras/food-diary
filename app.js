@@ -348,9 +348,11 @@
     day.waterMl = isFinite(ml) && ml > 0 ? ml : 0;
     delete day.water; // παλιά μονάδα (ποτήρια) — μετά την πρώτη επεξεργασία ισχύουν μόνο τα ml
     day.notes = $("dayNotes").value;
+    day.up = Date.now(); // χρονοσφραγίδα για τον online συγχρονισμό (νεότερο κερδίζει)
     if (dayHasData(day)) db[currentKey] = day;
     else delete db[currentKey];
     persist();
+    pushDay(profiles.current, currentKey);
     updateProgress(day);
     flashSaved();
     updateFootStats();
@@ -385,6 +387,7 @@
     if (!confirm("Να διαγραφούν όλες οι καταχωρήσεις της ημέρας " + fmtGr(currentKey) + ";")) return;
     delete db[currentKey];
     persist();
+    pushDay(profiles.current, currentKey);
     renderDay();
     updateFootStats();
     toast("Η ημέρα καθαρίστηκε");
@@ -783,7 +786,11 @@
         if (typeof data !== "object" || Array.isArray(data)) throw new Error("bad");
         var count = 0;
         Object.keys(data).forEach(function (k) {
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && data[k] && data[k].meals) { db[k] = data[k]; count++; }
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && data[k] && data[k].meals) {
+            db[k] = data[k];
+            count++;
+            pushDay(profiles.current, k);
+          }
         });
         persist();
         renderDay();
@@ -821,6 +828,7 @@
     if (!confirm("Σίγουρα; Δεν υπάρχει επαναφορά (εκτός αν έχεις αντίγραφο .json).")) return;
     db = {};
     persist();
+    wipeRemoteDays(profiles.current);
     renderDay();
     renderHistory();
     updateFootStats();
@@ -879,6 +887,7 @@
     persistProfiles();
     db = loadDb();
     refreshAllViews();
+    attachSync();
     closeUserModal();
     toast("Χρήστης: " + currentUser().name + " 👤");
   }
@@ -903,12 +912,16 @@
       if (!confirm("Να διαγραφεί ο χρήστης «" + u.name + "»" + (days ? " και οι " + days + " καταγεγραμμένες ημέρες του" : "") + "; Δεν υπάρχει επαναφορά.")) return;
       profiles.users = profiles.users.filter(function (x) { return x.id !== uid; });
       try { localStorage.removeItem(storeKeyFor(uid)); } catch (err) {}
+      wipeRemoteDays(uid);
       if (profiles.current === uid) {
         profiles.current = profiles.users[0].id;
         db = loadDb();
         refreshAllViews();
+        attachSync();
       }
+      profiles.up = Date.now();
       persistProfiles();
+      pushProfiles();
       renderUserList();
       toast("Ο χρήστης διαγράφηκε");
       return;
@@ -925,9 +938,187 @@
     if (exists) { toast("Υπάρχει ήδη χρήστης με αυτό το όνομα"); return; }
     var id = "u" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
     profiles.users.push({ id: id, name: name });
+    profiles.up = Date.now();
     persistProfiles();
+    pushProfiles();
     toast("Δημιουργήθηκε ο χρήστης «" + name + "» ✓");
     switchUser(id);
+  });
+
+  /* ============================================================
+     ONLINE ΣΥΓΧΡΟΝΙΣΜΟΣ (Firebase Firestore)
+     Τα δεδομένα κάθε χρήστη αποθηκεύονται στο cloud κάτω από έναν
+     «κωδικό οικογένειας» και συγχρονίζονται ζωντανά σε όλες τις συσκευές.
+     Το τοπικό localStorage παραμένει ως πρόχειρο/offline αντίγραφο.
+     ============================================================ */
+  var FAMILY_KEY = "imerologio-family";
+  var FB_CONFIG = {
+    apiKey: "AIzaSyAMt2dugXL7dVczFZQCVkf7tsHjDBA7W4A",
+    authDomain: "food-diary-cee75.firebaseapp.com",
+    projectId: "food-diary-cee75",
+    storageBucket: "food-diary-cee75.firebasestorage.app",
+    messagingSenderId: "984339913279",
+    appId: "1:984339913279:web:d6234a22bbacffa8a2368a"
+  };
+  var familyCode = "";
+  try { familyCode = localStorage.getItem(FAMILY_KEY) || ""; } catch (e) {}
+  var fdb = null, daysUnsub = null, profUnsub = null;
+
+  function syncEnabled() { return !!(fdb && familyCode && familyCode !== "__off__"); }
+  function setSyncStatus(txt) {
+    $("syncStatus").textContent = txt;
+    updateSyncCard();
+  }
+  function updateSyncCard() {
+    var el = $("syncInfo");
+    if (!el) return;
+    if (familyCode === "__off__") {
+      el.textContent = "Απενεργοποιημένος — τα δεδομένα μένουν μόνο σε αυτή τη συσκευή.";
+    } else if (familyCode) {
+      el.textContent = "Κωδικός οικογένειας: «" + familyCode + "». " + ($("syncStatus").textContent || "Τα δεδομένα συγχρονίζονται μέσω cloud (Firebase).");
+    } else {
+      el.textContent = "Δεν έχει οριστεί κωδικός οικογένειας.";
+    }
+  }
+
+  function initFirebase() {
+    if (!familyCode || familyCode === "__off__") { setSyncStatus(familyCode === "__off__" ? "Χωρίς online συγχρονισμό" : ""); return; }
+    if (!window.firebase || !firebase.firestore) { setSyncStatus("Ο συγχρονισμός δεν φόρτωσε (χωρίς σύνδεση;)"); return; }
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+      fdb = firebase.firestore();
+      attachSync();
+    } catch (e) { setSyncStatus("Σφάλμα συγχρονισμού"); }
+  }
+  function famDoc() { return fdb.collection("families").doc(familyCode); }
+  function daysCol(uid) { return famDoc().collection("users").doc(uid).collection("days"); }
+
+  function remoteRefresh() {
+    // μην πατήσεις πάνω σε κείμενο που πληκτρολογείται τώρα
+    var ae = document.activeElement;
+    var editing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && ae.closest("#view-day");
+    if (!editing) renderDay();
+    renderWeek();
+    renderHistory();
+    updateFootStats();
+  }
+
+  function attachSync() {
+    if (!syncEnabled()) return;
+    if (daysUnsub) { daysUnsub(); daysUnsub = null; }
+    if (profUnsub) { profUnsub(); profUnsub = null; }
+    var uid = profiles.current;
+    setSyncStatus("☁️ Συγχρονισμός…");
+
+    var firstSnap = true;
+    daysUnsub = daysCol(uid).onSnapshot(function (snap) {
+      var changed = false;
+      snap.docChanges().forEach(function (ch) {
+        if (ch.doc.metadata.hasPendingWrites) return; // δικές μας τοπικές αλλαγές
+        var k = ch.doc.id;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+        if (ch.type === "removed") {
+          if (db[k]) { delete db[k]; changed = true; }
+          return;
+        }
+        var remote = ch.doc.data();
+        var loc = db[k];
+        if (!loc || (remote.up || 0) >= (loc.up || 0)) {
+          if (JSON.stringify(remote) !== JSON.stringify(loc || null)) { db[k] = remote; changed = true; }
+        }
+      });
+      if (firstSnap) {
+        firstSnap = false;
+        // πρώτη σύνδεση: ανέβασε τοπικές ημέρες που δεν υπάρχουν στο cloud
+        var have = {};
+        snap.forEach(function (doc) { have[doc.id] = 1; });
+        Object.keys(db).forEach(function (k) {
+          if (!have[k] && dayHasData(db[k])) pushDay(uid, k);
+        });
+      }
+      if (changed) { persist(); remoteRefresh(); }
+      setSyncStatus("☁️ Συγχρονισμός ενεργός ✓");
+    }, function (err) {
+      setSyncStatus("☁️ Σφάλμα συγχρονισμού — τα δεδομένα μένουν τοπικά");
+    });
+
+    profUnsub = famDoc().collection("meta").doc("profiles").onSnapshot(function (doc) {
+      if (doc.metadata.hasPendingWrites) return;
+      var remote = doc.data();
+      if (!remote || !remote.users || !remote.users.length) { pushProfiles(); return; }
+      if ((remote.up || 0) > (profiles.up || 0)) {
+        var curId = profiles.current;
+        profiles.users = remote.users;
+        profiles.up = remote.up;
+        profiles.current = profiles.users.some(function (u) { return u.id === curId; }) ? curId : profiles.users[0].id;
+        persistProfiles();
+        renderUserButton();
+        if (!$("userOverlay").hidden) renderUserList();
+      } else if ((remote.up || 0) < (profiles.up || 0)) {
+        pushProfiles();
+      }
+    }, function () {});
+  }
+
+  function pushDay(uid, k) {
+    if (!syncEnabled()) return;
+    try {
+      var d = db[k];
+      if (d) daysCol(uid).doc(k).set(JSON.parse(JSON.stringify(d)));
+      else daysCol(uid).doc(k).delete();
+    } catch (e) {}
+  }
+  function pushProfiles() {
+    if (!syncEnabled()) return;
+    try {
+      famDoc().collection("meta").doc("profiles").set({
+        users: JSON.parse(JSON.stringify(profiles.users)),
+        up: profiles.up || Date.now()
+      });
+    } catch (e) {}
+  }
+  function wipeRemoteDays(uid) {
+    if (!syncEnabled()) return;
+    daysCol(uid).get().then(function (snap) {
+      var batch = fdb.batch();
+      snap.forEach(function (doc) { batch.delete(doc.ref); });
+      batch.commit();
+    }).catch(function () {});
+  }
+
+  /* Κωδικός οικογένειας — παράθυρο πρώτης εκκίνησης */
+  function saveFamilyCode(code) {
+    familyCode = code;
+    try { localStorage.setItem(FAMILY_KEY, code); } catch (e) {}
+    updateSyncCard();
+  }
+  $("famForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var code = $("famCode").value.trim().toLowerCase();
+    if (code.length < 4) { toast("Βάλε κωδικό τουλάχιστον 4 χαρακτήρων"); return; }
+    if (/[\/\.\[\]\*#]/.test(code)) { toast("Χωρίς σύμβολα / . [ ] * #"); return; }
+    saveFamilyCode(code);
+    $("famOverlay").hidden = true;
+    initFirebase();
+    openUserModal(true);
+  });
+  $("famSkip").addEventListener("click", function () {
+    saveFamilyCode("__off__");
+    $("famOverlay").hidden = true;
+    openUserModal(true);
+  });
+  $("syncChange").addEventListener("click", function () {
+    var code = prompt("Κωδικός οικογένειας (ίδιος σε όλες τις συσκευές):", familyCode === "__off__" ? "" : familyCode);
+    if (code == null) return;
+    code = code.trim().toLowerCase();
+    if (code.length < 4) { toast("Βάλε κωδικό τουλάχιστον 4 χαρακτήρων"); return; }
+    saveFamilyCode(code);
+    location.reload(); // καθαρή επανεκκίνηση συγχρονισμού
+  });
+  $("syncOff").addEventListener("click", function () {
+    if (!confirm("Να απενεργοποιηθεί ο online συγχρονισμός σε αυτή τη συσκευή; (Τα δεδομένα στο cloud δεν διαγράφονται.)")) return;
+    saveFamilyCode("__off__");
+    location.reload();
   });
 
   /* ---------- Footer ---------- */
@@ -942,5 +1133,11 @@
   renderUserButton();
   renderDay();
   updateFootStats();
-  openUserModal(true); // στο άνοιγμα διαλέγεις πάντα λογαριασμό
+  updateSyncCard();
+  if (familyCode) {
+    initFirebase();
+    openUserModal(true); // στο άνοιγμα διαλέγεις πάντα λογαριασμό
+  } else {
+    $("famOverlay").hidden = false; // πρώτη φορά: όρισε κωδικό οικογένειας (ή παράλειψη)
+  }
 })();

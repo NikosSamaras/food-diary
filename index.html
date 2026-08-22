@@ -186,13 +186,22 @@
 
     <div class="card">
       <div class="card-head"><h2>Αντίγραφο ασφαλείας</h2></div>
-      <p class="hint">Τα δεδομένα αποθηκεύονται τοπικά στον browser σου. Κράτα αντίγραφο ή μετέφερέ τα σε άλλη συσκευή.</p>
+      <p class="hint">Με ενεργό συγχρονισμό τα δεδομένα αποθηκεύονται και online. Το αντίγραφο .json παραμένει χρήσιμο ως εφεδρεία.</p>
       <div class="export-actions">
         <button class="ghost-btn" id="expJson">⬇ Λήψη αντιγράφου (.json)</button>
         <button class="ghost-btn" id="impJsonBtn">⬆ Εισαγωγή αντιγράφου</button>
         <input type="file" id="impJson" accept="application/json,.json" hidden>
       </div>
       <div id="importMsg" class="hint"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>☁️ Online συγχρονισμός</h2></div>
+      <p class="hint" id="syncInfo">—</p>
+      <div class="export-actions">
+        <button class="ghost-btn" id="syncChange">Ορισμός / αλλαγή κωδικού οικογένειας</button>
+        <button class="ghost-btn" id="syncOff">Απενεργοποίηση συγχρονισμού</button>
+      </div>
     </div>
 
     <div class="card danger-card">
@@ -206,7 +215,7 @@
 
 <footer class="foot">
   <span id="footStats">—</span>
-  <span>Τα δεδομένα μένουν στη συσκευή σου.</span>
+  <span id="syncStatus"></span>
 </footer>
 
 <datalist id="dl-fresh"></datalist>
@@ -216,6 +225,23 @@
 <datalist id="dl-snack"></datalist>
 <datalist id="dl-activity"></datalist>
 <datalist id="dl-duration"></datalist>
+
+<div class="overlay" id="famOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="famTitle">
+    <div class="modal-head"><h2 id="famTitle">☁️ Online συγχρονισμός</h2></div>
+    <p class="hint">Βάλε έναν <strong>κωδικό οικογένειας</strong> — τον ίδιο σε όλες τις συσκευές
+      (δικές σου, της Εύας, του Άλκη, της Μαρίας). Τα ημερολόγια όλων θα αποθηκεύονται
+      online και θα συγχρονίζονται αυτόματα παντού.</p>
+    <form id="famForm" class="new-user">
+      <input type="text" id="famCode" placeholder="π.χ. samaras-2026" maxlength="40" autocomplete="off">
+      <button class="primary-btn" type="submit">Σύνδεση</button>
+    </form>
+    <p class="hint">Διάλεξε κάτι που δεν μαντεύεται εύκολα και κράτησέ το μεταξύ σας — είναι το «κλειδί» των δεδομένων σας.</p>
+    <div class="modal-foot">
+      <button class="ghost-btn tiny" id="famSkip" type="button">Συνέχεια χωρίς online</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="userOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
@@ -234,6 +260,8 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="xlsx.js"></script>
 <script src="app.js"></script>
 </body>
