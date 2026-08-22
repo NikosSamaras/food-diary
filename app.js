@@ -385,9 +385,10 @@
   $("todayBtn").addEventListener("click", function () { goToDay(todayKey()); });
   $("clearDay").addEventListener("click", function () {
     if (!confirm("Να διαγραφούν όλες οι καταχωρήσεις της ημέρας " + fmtGr(currentKey) + ";")) return;
+    var oldDay = db[currentKey];
     delete db[currentKey];
     persist();
-    pushDay(profiles.current, currentKey);
+    pushDay(profiles.current, currentKey, oldDay);
     renderDay();
     updateFootStats();
     toast("Η ημέρα καθαρίστηκε");
@@ -1038,6 +1039,7 @@
           if (JSON.stringify(remote) !== JSON.stringify(loc || null)) { db[k] = remote; changed = true; }
         }
       });
+      var wasFirst = firstSnap;
       if (firstSnap) {
         firstSnap = false;
         // πρώτη σύνδεση: ανέβασε τοπικές ημέρες που δεν υπάρχουν στο cloud
@@ -1048,6 +1050,7 @@
         });
       }
       if (changed) { persist(); remoteRefresh(); }
+      if (wasFirst) maybeCloudSnapshot(uid); // ημερήσιο αντίγραφο ασφαλείας
       setSyncStatus("☁️ Συγχρονισμός ενεργός ✓");
     }, function (err) {
       setSyncStatus("☁️ Σφάλμα συγχρονισμού — τα δεδομένα μένουν τοπικά");
@@ -1071,13 +1074,43 @@
     }, function () {});
   }
 
-  function pushDay(uid, k) {
+  function pushDay(uid, k, oldData) {
     if (!syncEnabled()) return;
     try {
       var d = db[k];
-      if (d) daysCol(uid).doc(k).set(JSON.parse(JSON.stringify(d)));
-      else daysCol(uid).doc(k).delete();
+      if (d) {
+        daysCol(uid).doc(k).set(JSON.parse(JSON.stringify(d)));
+      } else {
+        if (oldData) trashPut(uid, k, oldData); // δικλείδα: πρώτα στον «κάδο», μετά διαγραφή
+        daysCol(uid).doc(k).delete();
+      }
     } catch (e) {}
+  }
+  function trashPut(uid, k, data) {
+    try {
+      famDoc().collection("trash").doc(uid + "_" + k + "_" + Date.now()).set({
+        uid: uid, day: k, deletedAt: Date.now(), data: JSON.parse(JSON.stringify(data))
+      });
+    } catch (e) {}
+  }
+  /* Ημερήσιο αντίγραφο ασφαλείας ανά χρήστη στο cloud (κρατάμε τα 30 τελευταία) */
+  function maybeCloudSnapshot(uid) {
+    if (!syncEnabled()) return;
+    var id = uid + "_" + todayKey();
+    var ref = famDoc().collection("backups").doc(id);
+    ref.get().then(function (doc) {
+      if (doc && doc.exists) return; // ήδη υπάρχει σημερινό
+      ref.set({ uid: uid, date: todayKey(), at: Date.now(), data: JSON.parse(JSON.stringify(db)) });
+      famDoc().collection("backups").get().then(function (snap) {
+        var mine = [];
+        snap.forEach(function (d) {
+          var v = d.data();
+          if (v && v.uid === uid) mine.push({ date: v.date || "", ref: d.ref });
+        });
+        mine.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+        mine.slice(0, Math.max(0, mine.length - 30)).forEach(function (x) { x.ref.delete(); });
+      }).catch(function () {});
+    }).catch(function () {});
   }
   function pushProfiles() {
     if (!syncEnabled()) return;
@@ -1091,9 +1124,18 @@
   function wipeRemoteDays(uid) {
     if (!syncEnabled()) return;
     daysCol(uid).get().then(function (snap) {
-      var batch = fdb.batch();
-      snap.forEach(function (doc) { batch.delete(doc.ref); });
-      batch.commit();
+      var docs = [];
+      snap.forEach(function (doc) { docs.push(doc); });
+      var stamp = Date.now();
+      for (var i = 0; i < docs.length; i += 200) { // όριο 500 πράξεων ανά batch
+        var batch = fdb.batch();
+        docs.slice(i, i + 200).forEach(function (doc) {
+          batch.set(famDoc().collection("trash").doc(uid + "_" + doc.id + "_" + stamp),
+            { uid: uid, day: doc.id, deletedAt: stamp, data: doc.data() });
+          batch.delete(doc.ref);
+        });
+        batch.commit();
+      }
     }).catch(function () {});
   }
 
