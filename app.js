@@ -16,9 +16,8 @@
   var MEALS = [
     { id: "proino",  name: "Πρωινό",       type: "3άδα", emoji: "🌅",
       slots: [
-        { id: "fresh",  label: "Φρέσκια τροφή (φρούτα/λαχανικά)", dl: "dl-fresh" },
-        { id: "animal", label: "Ζωική τροφή",                     dl: "dl-animal" },
-        { id: "starch", label: "Άμυλο ή ξηροί καρποί",            dl: "dl-starch" }
+        { id: "kyrios", label: "Κυρίως",             dl: "dl-kyrios" },
+        { id: "gliko",  label: "Επιδόρπιο / Γλυκό",  dl: "dl-gliko", opt: true }
       ]},
     { id: "progevma", name: "Προγεύμα",    type: "2άδα", emoji: "🍎",
       slots: [
@@ -27,9 +26,8 @@
       ]},
     { id: "gevma",   name: "Γεύμα",        type: "3άδα", emoji: "☀️",
       slots: [
-        { id: "fresh",  label: "Φρέσκια τροφή (φρούτα/λαχανικά)", dl: "dl-fresh" },
-        { id: "animal", label: "Ζωική τροφή",                     dl: "dl-animal" },
-        { id: "starch", label: "Άμυλο ή ξηροί καρποί",            dl: "dl-starch" }
+        { id: "kyrios", label: "Κυρίως",             dl: "dl-kyrios" },
+        { id: "gliko",  label: "Επιδόρπιο / Γλυκό",  dl: "dl-gliko", opt: true }
       ]},
     { id: "apogevmatino", name: "Απογευματινό", type: "2άδα", emoji: "🥨",
       slots: [
@@ -38,19 +36,17 @@
       ]},
     { id: "vradino", name: "Βραδινό",      type: "3άδα", emoji: "🌙",
       slots: [
-        { id: "fresh",  label: "Φρέσκια τροφή (φρούτα/λαχανικά)", dl: "dl-fresh" },
-        { id: "animal", label: "Ζωική τροφή",                     dl: "dl-animal" },
-        { id: "starch", label: "Άμυλο ή ξηροί καρποί",            dl: "dl-starch" }
+        { id: "kyrios", label: "Κυρίως",             dl: "dl-kyrios" },
+        { id: "gliko",  label: "Επιδόρπιο / Γλυκό",  dl: "dl-gliko", opt: true }
       ]}
   ];
 
-  var SLOT_SHORT = { fresh: "Φρέσκια", animal: "Ζωική", starch: "Άμυλο/Ξ.Καρποί", fruit: "Φρούτα", snack: "Snack" };
+  var SLOT_SHORT = { kyrios: "Κυρίως", gliko: "Γλυκό", fruit: "Φρούτα", snack: "Snack" };
 
   /* Προτάσεις αυτόματης συμπλήρωσης */
   var SUGGESTIONS = {
-    "dl-fresh":  ["Μήλο","Μπανάνα","Πορτοκάλι","Αχλάδι","Φράουλες","Σταφύλι","Καρπούζι","Πεπόνι","Σαλάτα πράσινη","Ντομάτα","Αγγούρι","Μπρόκολο","Καρότο","Κολοκυθάκια","Σπανάκι","Χόρτα","Λάχανο","Παντζάρια","Πιπεριές","Μελιτζάνα"],
-    "dl-animal": ["Κοτόπουλο","Μοσχάρι","Χοιρινό","Ψάρι","Σολομός","Τόνος","Αυγά","Γάλα","Γιαούρτι","Τυρί φέτα","Κασέρι","Κεφίρ","Γαλοπούλα","Γαρίδες","Κιμάς","Cottage"],
-    "dl-starch": ["Ψωμί ολικής","Ρύζι","Μακαρόνια","Πατάτες","Κινόα","Βρώμη","Φακές","Ρεβίθια","Φασόλια","Αμύγδαλα","Καρύδια","Φουντούκια","Κάσιους","Φυστίκια","Παξιμάδι","Κριθαράκι","Πλιγούρι"],
+    "dl-kyrios": ["Μακαρόνια με κιμά","Κοτόπουλο με ρύζι","Κοτόπουλο με πατάτες","Ψάρι με σαλάτα","Μπριζόλα με πατάτες","Φακές","Φασολάδα","Ρεβίθια","Γεμιστά","Μουσακάς","Παστίτσιο","Σπανακόρυζο","Ομελέτα","Αυγά με ψωμί","Τοστ","Γιαούρτι με βρώμη","Σουβλάκι","Κοτόσουπα","Ψαρόσουπα","Σαλάτα με τόνο","Πίτσα"],
+    "dl-gliko":  ["Παγωτό","Σοκολάτα","Κέικ","Μπισκότα","Κρέπα","Βάφλα","Χαλβάς","Ρυζόγαλο","Γιαούρτι με μέλι","Φρουτοσαλάτα","Φρούτο","Λουκουμάδες","Γκοφρέτα","Κουλουράκια","Τούρτα","Μηλόπιτα"],
     "dl-fruit":  ["Μήλο","Μπανάνα","Πορτοκάλι","Αχλάδι","Σταφίδες","Χουρμάδες","Δαμάσκηνα ξερά","Βερίκοκα ξερά","Σύκα ξερά","Φράουλες","Ακτινίδιο","Ροδάκινο"],
     "dl-snack":  ["Αμύγδαλα","Καρύδια","Φουντούκια","Κάσιους","Μπάρα δημητριακών","Κουλούρι","Κράκερ ολικής","Παξιμαδάκια","Ποπ κορν","Ταχίνι με μέλι"],
     "dl-activity": ["Περπάτημα","Τρέξιμο","Γυμναστήριο","Ποδήλατο","Κολύμπι","Yoga","Pilates","Χορός","Βάρη","Ποδόσφαιρο","Μπάσκετ","Τένις","Σκάλες","Διατάσεις"],
@@ -135,8 +131,26 @@
   }
 
   /* ---------- Αποθήκευση ---------- */
+  var LEGACY_TRIO_SLOTS = ["fresh", "animal", "starch"]; // παλιά δομή συνδυασμών
+  function migrateDayShape(d) {
+    // Παλιές καταγραφές (Φρέσκια/Ζωική/Άμυλο) → συγχώνευση στο «Κυρίως»
+    if (!d || !d.meals) return d;
+    ["proino", "gevma", "vradino"].forEach(function (mid) {
+      var mm = d.meals[mid];
+      if (!mm) return;
+      if (mm.kyrios != null || mm.gliko != null) return; // ήδη νέα δομή
+      var vals = LEGACY_TRIO_SLOTS.map(function (k) { return (mm[k] || "").trim(); }).filter(Boolean);
+      if (vals.length) mm.kyrios = vals.join(" · ");
+      LEGACY_TRIO_SLOTS.forEach(function (k) { delete mm[k]; });
+    });
+    return d;
+  }
   function loadDb() {
-    try { return JSON.parse(localStorage.getItem(storeKeyFor(profiles.current)) || "{}") || {}; }
+    try {
+      var d = JSON.parse(localStorage.getItem(storeKeyFor(profiles.current)) || "{}") || {};
+      Object.keys(d).forEach(function (k) { migrateDayShape(d[k]); });
+      return d;
+    }
     catch (e) { return {}; }
   }
   var db = loadDb();
@@ -172,7 +186,10 @@
     return false;
   }
   function mealDone(day, meal) {
-    return meal.slots.every(function (s) { return ((day.meals[meal.id] || {})[s.id] || "").trim() !== ""; });
+    // το επιδόρπιο/γλυκό είναι προαιρετικό — μετράνε μόνο τα υποχρεωτικά πεδία
+    return meal.slots.every(function (s) {
+      return s.opt || ((day.meals[meal.id] || {})[s.id] || "").trim() !== "";
+    });
   }
   function mealsDoneCount(day) {
     return MEALS.filter(function (m) { return mealDone(day, m); }).length;
@@ -788,7 +805,7 @@
         var count = 0;
         Object.keys(data).forEach(function (k) {
           if (/^\d{4}-\d{2}-\d{2}$/.test(k) && data[k] && data[k].meals) {
-            db[k] = data[k];
+            db[k] = migrateDayShape(data[k]);
             count++;
             pushDay(profiles.current, k);
           }
@@ -1033,7 +1050,7 @@
           if (db[k]) { delete db[k]; changed = true; }
           return;
         }
-        var remote = ch.doc.data();
+        var remote = migrateDayShape(ch.doc.data()); // παλιά δομή από μη ενημερωμένη συσκευή
         var loc = db[k];
         if (!loc || (remote.up || 0) >= (loc.up || 0)) {
           if (JSON.stringify(remote) !== JSON.stringify(loc || null)) { db[k] = remote; changed = true; }
