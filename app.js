@@ -77,17 +77,17 @@
   }
 
   /* ---------- Χρήστες (προφίλ) ---------- */
+  var DEFAULT_USERS = [
+    { id: "nikos", name: "Νίκος" },
+    { id: "eva",   name: "Εύα" },
+    { id: "alkis", name: "Άλκης" },
+    { id: "maria", name: "Μαρία" },
+    { id: "test",  name: "Δοκιμή" }
+  ];
   var profiles = null;
   try { profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "null"); } catch (e) {}
   if (!profiles || !profiles.users || !profiles.users.length) {
-    profiles = {
-      current: "nikos",
-      users: [
-        { id: "nikos", name: "Νίκος" },
-        { id: "eva",   name: "Εύα" },
-        { id: "test",  name: "Δοκιμή" }
-      ]
-    };
+    profiles = { current: "nikos", seeded: 2, users: DEFAULT_USERS.map(function (u) { return { id: u.id, name: u.name }; }) };
     // Μεταφορά δεδομένων από την έκδοση χωρίς χρήστες → στον Νίκο
     try {
       var legacy = localStorage.getItem(LEGACY_STORE_KEY);
@@ -95,6 +95,18 @@
         localStorage.setItem(storeKeyFor("nikos"), legacy);
       }
     } catch (e) {}
+    persistProfiles();
+  } else if ((profiles.seeded || 1) < 2) {
+    // Υπάρχουσα εγκατάσταση: πρόσθεσε μία φορά τους νέους προεπιλεγμένους χρήστες (Άλκης, Μαρία)
+    ["alkis", "maria"].forEach(function (id) {
+      var du = null;
+      DEFAULT_USERS.forEach(function (x) { if (x.id === id) du = x; });
+      var exists = profiles.users.some(function (u) {
+        return u.id === du.id || u.name.toLowerCase() === du.name.toLowerCase();
+      });
+      if (!exists) profiles.users.push({ id: du.id, name: du.name });
+    });
+    profiles.seeded = 2;
     persistProfiles();
   }
   if (!profiles.users.some(function (u) { return u.id === profiles.current; })) {
@@ -845,8 +857,19 @@
         "</div>";
     }).join("");
   }
-  function openUserModal() { renderUserList(); $("newUserName").value = ""; $("userOverlay").hidden = false; }
-  function closeUserModal() { $("userOverlay").hidden = true; }
+  var lockedPick = false; // στο άνοιγμα της σελίδας πρέπει πρώτα να διαλέξεις λογαριασμό
+  function openUserModal(locked) {
+    lockedPick = !!locked;
+    $("userClose").hidden = lockedPick;
+    $("userModalTitle").textContent = lockedPick ? "👤 Ποιος καταγράφει;" : "👤 Χρήστες";
+    renderUserList();
+    $("newUserName").value = "";
+    $("userOverlay").hidden = false;
+  }
+  function closeUserModal() {
+    if (lockedPick) return; // κλείνει μόνο με επιλογή χρήστη
+    $("userOverlay").hidden = true;
+  }
 
   function refreshAllViews() {
     renderDay();
@@ -856,6 +879,7 @@
     renderUserButton();
   }
   function switchUser(id) {
+    lockedPick = false; // η επιλογή χρήστη ξεκλειδώνει το παράθυρο εκκίνησης
     if (id === profiles.current) { closeUserModal(); return; }
     clearTimeout(saveDebounce);
     saveCurrentDay();
@@ -867,7 +891,7 @@
     toast("Χρήστης: " + currentUser().name + " 👤");
   }
 
-  $("userBtn").addEventListener("click", openUserModal);
+  $("userBtn").addEventListener("click", function () { openUserModal(false); });
   $("userClose").addEventListener("click", closeUserModal);
   $("userOverlay").addEventListener("click", function (e) {
     if (e.target === this) closeUserModal();
@@ -926,4 +950,5 @@
   renderUserButton();
   renderDay();
   updateFootStats();
+  openUserModal(true); // στο άνοιγμα διαλέγεις πάντα λογαριασμό
 })();
