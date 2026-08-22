@@ -145,8 +145,14 @@
     try { localStorage.setItem(storeKeyFor(profiles.current), JSON.stringify(db)); }
     catch (e) { toast("Σφάλμα αποθήκευσης — γεμάτος χώρος browser;"); }
   }
+  var ML_PER_GLASS = 250; // μετατροπή παλιών καταγραφών (ποτήρια → ml)
+  function getWaterMl(d) {
+    if (!d) return 0;
+    if (d.waterMl != null) return d.waterMl || 0;
+    return d.water ? d.water * ML_PER_GLASS : 0;
+  }
   function blankDay() {
-    var d = { meals: {}, times: {}, activity: { type: "", duration: "" }, water: 0, notes: "" };
+    var d = { meals: {}, times: {}, activity: { type: "", time: "", duration: "" }, waterMl: 0, notes: "" };
     MEALS.forEach(function (m) {
       d.meals[m.id] = {};
       m.slots.forEach(function (s) { d.meals[m.id][s.id] = ""; });
@@ -160,7 +166,7 @@
   }
   function dayHasData(d) {
     if (!d) return false;
-    if ((d.activity && (d.activity.type || d.activity.duration)) || d.water > 0 || (d.notes || "").trim()) return true;
+    if ((d.activity && (d.activity.type || d.activity.duration || d.activity.time)) || getWaterMl(d) > 0 || (d.notes || "").trim()) return true;
     for (var m in d.meals) for (var s in d.meals[m]) if ((d.meals[m][s] || "").trim()) return true;
     if (d.times) for (var t in d.times) if ((d.times[t] || "").trim()) return true;
     return false;
@@ -275,44 +281,18 @@
   }
   buildMealCards();
 
-  /* Νερό */
-  var WATER_MAX = 10;
-  (function buildWater() {
-    var wrap = $("waterDots");
-    for (var i = 1; i <= WATER_MAX; i++) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "wdot";
-      b.dataset.n = i;
-      b.textContent = "💧";
-      b.title = i + (i === 1 ? " ποτήρι" : " ποτήρια");
-      wrap.appendChild(b);
-    }
-    wrap.addEventListener("click", function (e) {
-      var b = e.target.closest(".wdot");
-      if (!b) return;
-      var n = +b.dataset.n;
-      var day = getDay(currentKey);
-      day.water = (day.water === n) ? n - 1 : n;
-      db[currentKey] = day;
-      persist();
-      paintWater(day.water);
-      flashSaved();
-      updateFootStats();
+  /* Νερό σε ml */
+  document.querySelectorAll("[data-addml]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var cur = parseInt($("waterMl").value, 10);
+      $("waterMl").value = (isFinite(cur) && cur > 0 ? cur : 0) + (+this.dataset.addml);
+      scheduleSave();
     });
-    $("waterReset").addEventListener("click", function () {
-      var day = getDay(currentKey);
-      day.water = 0;
-      db[currentKey] = day;
-      persist();
-      paintWater(0);
-    });
-  })();
-  function paintWater(n) {
-    document.querySelectorAll(".wdot").forEach(function (d) {
-      d.classList.toggle("on", +d.dataset.n <= n);
-    });
-  }
+  });
+  $("waterReset").addEventListener("click", function () {
+    $("waterMl").value = "";
+    scheduleSave();
+  });
 
   function renderDay() {
     var day = getDay(currentKey);
@@ -328,9 +308,11 @@
       inp.value = (day.times || {})[inp.dataset.meal] || "";
     });
     $("actType").value = day.activity.type || "";
+    $("actTime").value = day.activity.time || "";
     $("actDuration").value = day.activity.duration || "";
     $("dayNotes").value = day.notes || "";
-    paintWater(day.water || 0);
+    var ml = getWaterMl(day);
+    $("waterMl").value = ml > 0 ? ml : "";
     updateProgress(day);
   }
 
@@ -360,7 +342,11 @@
       day.times[inp.dataset.meal] = inp.value;
     });
     day.activity.type = $("actType").value.trim();
+    day.activity.time = $("actTime").value;
     day.activity.duration = $("actDuration").value.trim();
+    var ml = parseInt($("waterMl").value, 10);
+    day.waterMl = isFinite(ml) && ml > 0 ? ml : 0;
+    delete day.water; // παλιά μονάδα (ποτήρια) — μετά την πρώτη επεξεργασία ισχύουν μόνο τα ml
     day.notes = $("dayNotes").value;
     if (dayHasData(day)) db[currentKey] = day;
     else delete db[currentKey];
@@ -373,8 +359,9 @@
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave); // τα input[type=time] ενημερώνουν αξιόπιστα στο change
   });
-  ["actType", "actDuration", "dayNotes"].forEach(function (id) {
+  ["actType", "actTime", "actDuration", "dayNotes", "waterMl"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
+    $(id).addEventListener("change", scheduleSave);
   });
 
   /* Πλοήγηση ημέρας */
@@ -453,8 +440,10 @@
     html += "<tr><th><span class='b'>🏃 Φυσική Δραστ.</span>Είδος/Διάρκεια</th>";
     keys.forEach(function (k) {
       var day = db[k], cell = "";
-      if (day && day.activity && (day.activity.type || day.activity.duration)) {
-        cell = esc(day.activity.type || "—") + (day.activity.duration ? "<br><span class='l'>" + esc(day.activity.duration) + "</span>" : "");
+      if (day && day.activity && (day.activity.type || day.activity.duration || day.activity.time)) {
+        cell = (day.activity.time ? "<span class='l'>🕐 " + esc(day.activity.time) + "</span>" : "") +
+          esc(day.activity.type || "—") +
+          (day.activity.duration ? "<br><span class='l'>" + esc(day.activity.duration) + "</span>" : "");
       }
       html += "<td data-day='" + k + "'>" + (cell || "&nbsp;") + "</td>";
     });
@@ -490,7 +479,7 @@
     var parts = [];
     for (var m in day.meals) for (var s in day.meals[m]) parts.push(day.meals[m][s] || "");
     if (day.times) for (var t in day.times) parts.push(day.times[t] || "");
-    parts.push(day.activity.type || "", day.activity.duration || "", day.notes || "");
+    parts.push(day.activity.type || "", day.activity.duration || "", day.activity.time || "", day.notes || "");
     return parts.join(" ").toLowerCase().indexOf(q) !== -1;
   }
 
@@ -527,14 +516,14 @@
       var d = db[k];
       if (mealsDoneCount(d) === MEALS.length) full++;
       if (d.activity && (d.activity.type || "").trim()) actDays++;
-      waterSum += d.water || 0;
+      waterSum += getWaterMl(d);
     });
     var streak = calcStreak();
     $("historyStats").innerHTML =
       stat(total, "καταγεγραμμένες ημέρες") +
       stat(full, "πλήρεις ημέρες (5/5)") +
       stat(actDays, "ημέρες με δραστηριότητα") +
-      stat(total ? (waterSum / total).toFixed(1) : "0", "μ.ό. ποτήρια νερό") +
+      stat(total ? Math.round(waterSum / total) : 0, "μ.ό. ml νερού / ημέρα") +
       stat(streak, "σερί ημερών 🔥");
 
     var list = $("historyList");
@@ -558,11 +547,13 @@
         return (vals || tm) ? "<div class='hrow'><span class='hm'>" + label + "</span><span class='hv'>" + (vals || "—") + "</span></div>" : "";
       }).filter(Boolean).join("");
       var extra = "";
-      if (d.activity && (d.activity.type || d.activity.duration)) {
-        extra += "<div class='hrow'><span class='hm'>🏃 Δραστηριότητα</span><span class='hv'>" +
+      if (d.activity && (d.activity.type || d.activity.duration || d.activity.time)) {
+        extra += "<div class='hrow'><span class='hm'>🏃 Δραστηριότητα" +
+          (d.activity.time ? " <span class='htime'>🕐 " + esc(d.activity.time) + "</span>" : "") + "</span><span class='hv'>" +
           esc(d.activity.type || "—") + (d.activity.duration ? " · " + esc(d.activity.duration) : "") + "</span></div>";
       }
-      if (d.water) extra += "<div class='hrow'><span class='hm'>💧 Νερό</span><span class='hv'>" + d.water + " ποτήρια</span></div>";
+      var wml = getWaterMl(d);
+      if (wml) extra += "<div class='hrow'><span class='hm'>💧 Νερό</span><span class='hv'>" + wml + " ml</span></div>";
       if ((d.notes || "").trim()) extra += "<div class='hrow'><span class='hm'>📝 Σημειώσεις</span><span class='hv'>" + esc(d.notes) + "</span></div>";
       return "<details class='hday'><summary>" +
         "<span class='hdate'>" + fmtGr(k) + "</span>" +
@@ -628,7 +619,7 @@
       head.push(m.name + " — Ώρα");
       m.slots.forEach(function (s) { head.push(m.name + " — " + SLOT_SHORT[s.id]); });
     });
-    head.push("Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό (ποτήρια)", "Σημειώσεις");
+    head.push("Δραστηριότητα (ώρα)", "Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό (ml)", "Σημειώσεις");
     var rows = [head.map(function (h) { return { v: h, s: "head" }; })];
     keys.forEach(function (k) {
       var d = db[k];
@@ -637,7 +628,7 @@
         row.push((d.times || {})[m.id] || "");
         m.slots.forEach(function (s) { row.push((d.meals[m.id] || {})[s.id] || ""); });
       });
-      row.push(d.activity.type || "", d.activity.duration || "", d.water || 0, d.notes || "");
+      row.push(d.activity.time || "", d.activity.type || "", d.activity.duration || "", getWaterMl(d) || 0, d.notes || "");
       rows.push(row);
     });
     var cols = [12, 12];
@@ -704,14 +695,15 @@
         keys.forEach(function (k) {
           var d = db[k];
           var t = (d && d.activity && d.activity.type) || "";
+          var tm = (d && d.activity && d.activity.time) || "";
           var du = (d && d.activity && d.activity.duration) || "";
-          r9.push({ v: "ΕΙΔΟΣ: " + t + "\nΔΙΑΡΚΕΙΑ: " + du, s: "cell" });
+          r9.push({ v: "ΕΙΔΟΣ: " + t + "\nΩΡΑ: " + tm + "\nΔΙΑΡΚΕΙΑ: " + du, s: "cell" });
         });
-        rows.push(r9); heights.push(42);
+        rows.push(r9); heights.push(52);
 
         // Γρ.10-11: νερό & σημειώσεις (δικά μας πεδία, στο ίδιο ύφος)
-        var r10 = [{ v: "ΝΕΡΟ (ΠΟΤΗΡΙΑ)", s: "mealtag" }, { v: "", s: "mealtag" }];
-        keys.forEach(function (k) { r10.push({ v: db[k] ? (db[k].water || "") : "", s: "cell" }); });
+        var r10 = [{ v: "ΝΕΡΟ (ml)", s: "mealtag" }, { v: "", s: "mealtag" }];
+        keys.forEach(function (k) { r10.push({ v: getWaterMl(db[k]) || "", s: "cell" }); });
         rows.push(r10); heights.push(20);
         var r11 = [{ v: "ΣΗΜΕΙΩΣΕΙΣ", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) { r11.push({ v: db[k] ? (db[k].notes || "") : "", s: "cell" }); });
@@ -744,7 +736,7 @@
       head.push(m.name + " - Ώρα");
       m.slots.forEach(function (s) { head.push(m.name + " - " + SLOT_SHORT[s.id]); });
     });
-    head.push("Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό", "Σημειώσεις");
+    head.push("Δραστηριότητα (ώρα)", "Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Νερό (ml)", "Σημειώσεις");
     var lines = [head.map(q).join(";")];
     keys.forEach(function (k) {
       var d = db[k];
@@ -753,7 +745,7 @@
         row.push((d.times || {})[m.id] || "");
         m.slots.forEach(function (s) { row.push((d.meals[m.id] || {})[s.id] || ""); });
       });
-      row.push(d.activity.type || "", d.activity.duration || "", d.water || 0, d.notes || "");
+      row.push(d.activity.time || "", d.activity.type || "", d.activity.duration || "", getWaterMl(d) || 0, d.notes || "");
       lines.push(row.map(q).join(";"));
     });
     // BOM ώστε το Excel να διαβάσει σωστά τα ελληνικά· ";" ως διαχωριστικό για ελληνικές τοπικές ρυθμίσεις

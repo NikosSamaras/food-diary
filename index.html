@@ -70,6 +70,10 @@
           <input type="text" id="actType" list="dl-activity" placeholder="π.χ. περπάτημα, γυμναστήριο…" autocomplete="off">
         </label>
         <label class="slot">
+          <span class="slot-label">Ώρα</span>
+          <input type="time" id="actTime">
+        </label>
+        <label class="slot">
           <span class="slot-label">Διάρκεια</span>
           <input type="text" id="actDuration" list="dl-duration" placeholder="π.χ. 45 λεπτά" autocomplete="off">
         </label>
@@ -81,9 +85,14 @@
         <h2>Νερό &amp; Σημειώσεις</h2>
       </div>
       <div class="water">
-        <span class="slot-label">Ποτήρια νερό</span>
-        <div class="water-dots" id="waterDots"></div>
-        <button class="ghost-btn tiny" id="waterReset">Μηδενισμός</button>
+        <span class="slot-label">Νερό</span>
+        <div class="water-ctl">
+          <input type="number" id="waterMl" min="0" max="10000" step="50" inputmode="numeric" placeholder="0">
+          <span class="water-unit">ml</span>
+          <button class="ghost-btn tiny" type="button" data-addml="250">+250</button>
+          <button class="ghost-btn tiny" type="button" data-addml="500">+500</button>
+          <button class="ghost-btn tiny" id="waterReset" type="button">Μηδενισμός</button>
+        </div>
       </div>
       <label class="slot">
         <span class="slot-label">Σημειώσεις ημέρας</span>
