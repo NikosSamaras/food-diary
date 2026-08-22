@@ -960,8 +960,19 @@
     messagingSenderId: "984339913279",
     appId: "1:984339913279:web:d6234a22bbacffa8a2368a"
   };
+  var DEFAULT_FAMILY = "diatrofi-2026"; // αυτόματος κωδικός — οικογενειακή χρήση
   var familyCode = "";
-  try { familyCode = localStorage.getItem(FAMILY_KEY) || ""; } catch (e) {}
+  try {
+    familyCode = localStorage.getItem(FAMILY_KEY) || "";
+    // Μία φορά: ενεργοποίηση με τον προεπιλεγμένο κωδικό (και σε συσκευές που είχαν πατήσει «χωρίς online»)
+    if (!localStorage.getItem(FAMILY_KEY + "-autoset")) {
+      if (!familyCode || familyCode === "__off__") {
+        familyCode = DEFAULT_FAMILY;
+        localStorage.setItem(FAMILY_KEY, familyCode);
+      }
+      localStorage.setItem(FAMILY_KEY + "-autoset", "1");
+    }
+  } catch (e) { familyCode = familyCode || DEFAULT_FAMILY; }
   var fdb = null, daysUnsub = null, profUnsub = null;
 
   function syncEnabled() { return !!(fdb && familyCode && familyCode !== "__off__"); }
@@ -1134,10 +1145,6 @@
   renderDay();
   updateFootStats();
   updateSyncCard();
-  if (familyCode) {
-    initFirebase();
-    openUserModal(true); // στο άνοιγμα διαλέγεις πάντα λογαριασμό
-  } else {
-    $("famOverlay").hidden = false; // πρώτη φορά: όρισε κωδικό οικογένειας (ή παράλειψη)
-  }
+  initFirebase();
+  openUserModal(true); // στο άνοιγμα διαλέγεις πάντα λογαριασμό
 })();
