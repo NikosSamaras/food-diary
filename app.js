@@ -311,56 +311,18 @@
     scheduleSave();
   });
 
-  /* Νυχτερινός ύπνος (φεγγαράκια: 1-12 ώρες + μισή ώρα) */
-  var SLEEP_MAX = 12;
+  /* Νυχτερινός ύπνος (ώρες, με γρήγορες επιλογές) */
   function fmtHours(v) { return String(v).replace(".", ","); }
-  (function buildSleep() {
-    var wrap = $("sleepDots");
-    for (var i = 1; i <= SLEEP_MAX; i++) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "sdot";
-      b.dataset.n = i;
-      b.textContent = "🌙";
-      b.title = i + (i === 1 ? " ώρα" : " ώρες");
-      wrap.appendChild(b);
-    }
-    function setSleep(v) {
-      var day = getDay(currentKey);
-      day.sleep = v;
-      day.up = Date.now();
-      if (dayHasData(day)) db[currentKey] = day;
-      else delete db[currentKey];
-      persist();
-      pushDay(profiles.current, currentKey);
-      paintSleep(v);
-      flashSaved();
-      updateFootStats();
-    }
-    wrap.addEventListener("click", function (e) {
-      var b = e.target.closest(".sdot");
-      if (!b) return;
-      var n = +b.dataset.n;
-      var cur = getDay(currentKey).sleep || 0;
-      var half = cur % 1;
-      var whole = Math.floor(cur);
-      setSleep((whole === n ? n - 1 : n) + half);
+  document.querySelectorAll("[data-sleeph]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      $("sleepHours").value = this.dataset.sleeph;
+      scheduleSave();
     });
-    $("sleepHalf").addEventListener("click", function () {
-      var cur = getDay(currentKey).sleep || 0;
-      setSleep(Math.floor(cur) + (cur % 1 ? 0 : 0.5));
-    });
-    $("sleepReset").addEventListener("click", function () { setSleep(0); });
-  })();
-  function paintSleep(v) {
-    v = v || 0;
-    var whole = Math.floor(v);
-    document.querySelectorAll("#sleepDots .sdot").forEach(function (d) {
-      d.classList.toggle("on", +d.dataset.n <= whole);
-    });
-    $("sleepHalf").classList.toggle("on", v % 1 !== 0);
-    $("sleepLabel").textContent = v > 0 ? fmtHours(v) + (v === 1 ? " ώρα ύπνου" : " ώρες ύπνου") : "Καμία καταχώρηση ύπνου";
-  }
+  });
+  $("sleepReset").addEventListener("click", function () {
+    $("sleepHours").value = "";
+    scheduleSave();
+  });
 
   function renderDay() {
     var day = getDay(currentKey);
@@ -381,7 +343,7 @@
     $("dayNotes").value = day.notes || "";
     var ml = getWaterMl(day);
     $("waterMl").value = ml > 0 ? ml : "";
-    paintSleep(day.sleep || 0);
+    $("sleepHours").value = day.sleep > 0 ? day.sleep : "";
     updateProgress(day);
   }
 
@@ -415,6 +377,8 @@
     day.activity.duration = $("actDuration").value.trim();
     var ml = parseInt($("waterMl").value, 10);
     day.waterMl = isFinite(ml) && ml > 0 ? ml : 0;
+    var sl = parseFloat(String($("sleepHours").value).replace(",", "."));
+    day.sleep = isFinite(sl) && sl > 0 ? Math.min(sl, 24) : 0;
     delete day.water; // παλιά μονάδα (ποτήρια) — μετά την πρώτη επεξεργασία ισχύουν μόνο τα ml
     day.notes = $("dayNotes").value;
     day.up = Date.now(); // χρονοσφραγίδα για τον online συγχρονισμό (νεότερο κερδίζει)
@@ -430,7 +394,7 @@
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave); // τα input[type=time] ενημερώνουν αξιόπιστα στο change
   });
-  ["actType", "actTime", "actDuration", "dayNotes", "waterMl"].forEach(function (id) {
+  ["actType", "actTime", "actDuration", "dayNotes", "waterMl", "sleepHours"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave);
   });
