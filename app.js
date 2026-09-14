@@ -30,6 +30,52 @@
     "dl-duration": ["15 λεπτά","20 λεπτά","30 λεπτά","45 λεπτά","1 ώρα","1,5 ώρα","2 ώρες"]
   };
 
+  /* ============================================================
+     Αναγνώριση τροφών: κατατάσσει ό,τι γράφεις σε κατηγορίες του
+     εντύπου (φρέσκια/ζωική/άμυλο-καρποί, φρούτα/snack) με λεξικό
+     ελληνικών στελεχών λέξεων — τοπικά, χωρίς internet.
+     ============================================================ */
+  var FOOD_LEXICON = {
+    veg:    ["σαλατ","ντοματ","αγγουρ","μπροκολ","καροτ","κολοκυθ","σπανακ","χορτ","λαχαν","παντζαρ","πιπερι","μελιτζαν","μαρουλ","κρεμμυδ","αρακ","φασολακ","μπαμι","αγκιναρ","σπαραγγ","κουνουπιδ","σελιν","ραδικ","βλιτ","ρoκα","ροκα","γεμιστ","μουσακ","χωριατικ","ταμπουλε","μπριαμ","λαδερ"],
+    fruit:  ["μηλ","μπαναν","πορτοκαλ","αχλαδ","φραουλ","σταφυλ","καρπουζ","πεπον","ακτινιδ","ροδακιν","βερικοκ","κερασ","νεκταριν","μανταριν","σταφιδ","χουρμαδ","δαμασκην","συκ","ανανα","μανγκ","φρουτ","κομποστ","βατομουρ","μυρτιλ","αβοκαντ"],
+    animal: ["κοτοπουλ","κοτοσουπ","κοτομπουκ","κοτολετ","μοσχαρ","χοιριν","ψαρ","σολομ","τονο","σαρδελ","γαυρ","τσιπουρ","λαβρακ","μπακαλιαρ","καλαμαρ","χταποδ","μυδ","γαριδ","αυγ","ομελετ","γαλα","γαλατ","γιαουρτ","τυρ","φετα","κασερ","κεφιρ","γαλοπουλ","κιμα","μπιφτεκ","σουβλακ","γυρο","λουκανικ","ζαμπον","μπεικον","κρεα","αρνακ","αρνισι","κατσικ","κυνηγ","παστιτσι","μουσακ","τοστ","κοτατζ","cottage"],
+    starch: ["ψωμ","ρυζ","μακαρον","ζυμαρικ","πατατ","κινοα","βρωμ","φακ","ρεβιθ","φασολ","φασολαδ","παξιμαδ","κριθαρακ","πλιγουρ","κουσκους","τορτιγ","πιτσ","πιτα","νιοκ","λαζαν","σπαγγετ","χυλοπιτ","τραχαν","δημητριακ","μουσλ","φρυγαν","κρουασαν","γεμιστ","παστιτσι","μουσακ","σουβλακ","τοστ","καλαμποκ","αραβοσιτ","πουρε"],
+    nuts:   ["αμυγδαλ","καρυδ","φουντουκ","φυστικ","κασιου","ηλιοσπορ","κολοκυθοσπορ","ταχιν","παστελ"],
+    snack:  ["μπαρ","κουλουρ","κρακερ","παξιμαδακ","ποπκορν","κριτσιν","ρυζογκοφρετ"]
+  };
+  function normGr(s) {
+    return String(s || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/ς/g, "σ");
+  }
+  function foodCategories(text) {
+    var words = normGr(text).split(/[^a-zα-ω0-9]+/).filter(Boolean);
+    var out = {};
+    Object.keys(FOOD_LEXICON).forEach(function (cat) {
+      out[cat] = FOOD_LEXICON[cat].some(function (stem) {
+        return words.some(function (w) { return w.indexOf(stem) === 0; });
+      });
+    });
+    return out;
+  }
+  function comboStatus(meal, text) {
+    if (!(text || "").trim()) return null;
+    var c = foodCategories(text);
+    if (meal.type === "2άδα") {
+      var parts2 = [
+        { label: "Φρούτα", ok: c.fruit },
+        { label: "Snack/Καρποί", ok: c.snack || c.nuts }
+      ];
+      return { parts: parts2, complete: parts2.every(function (p) { return p.ok; }), tag: "2άδα" };
+    }
+    var parts3 = [
+      { label: "Φρέσκια", ok: c.veg || c.fruit },
+      { label: "Ζωική", ok: c.animal },
+      { label: "Άμυλο/Καρποί", ok: c.starch || c.nuts }
+    ];
+    return { parts: parts3, complete: parts3.every(function (p) { return p.ok; }), tag: "3άδα" };
+  }
+
   var DOW = ["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
   var DOW_SHORT = ["Κυρ","Δευ","Τρί","Τετ","Πέμ","Παρ","Σάβ"];
   var MONTHS = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
@@ -281,7 +327,8 @@
             '<span class="check">✓</span>' +
           '</div>' +
         '</div>' +
-        '<div class="slots">' + slotsHtml + '</div>';
+        '<div class="slots">' + slotsHtml + '</div>' +
+        '<div class="combo-hint" id="combo-' + m.id + '"></div>';
       wrap.appendChild(card);
     });
   }
@@ -378,6 +425,7 @@
     var ml = getWaterMl(day);
     $("waterMl").value = ml > 0 ? ml : "";
     $("sleepHours").value = day.sleep > 0 ? day.sleep : "";
+    renderComboHints();
     updateProgress(day);
   }
 
@@ -430,6 +478,22 @@
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave); // τα input[type=time] ενημερώνουν αξιόπιστα στο change
   });
+  /* Ζωντανή ένδειξη 3άδας/2άδας καθώς γράφεις */
+  function renderComboHints() {
+    MEALS.forEach(function (m) {
+      var el = $("combo-" + m.id);
+      if (!el) return;
+      var ta = document.querySelector('#mealCards [data-meal="' + m.id + '"][data-slot="kyrios"]');
+      var st = comboStatus(m, ta ? ta.value : "");
+      if (!st) { el.innerHTML = ""; return; }
+      var html = st.parts.map(function (p) {
+        return "<span class='cchip" + (p.ok ? " on" : "") + "'>" + (p.ok ? "✓ " : "") + p.label + "</span>";
+      }).join("");
+      if (st.complete) html += "<span class='cchip full'>" + st.tag + " ✓</span>";
+      el.innerHTML = html;
+    });
+  }
+  $("mealCards").addEventListener("input", renderComboHints);
   ["dayNotes", "waterMl", "sleepHours"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave);
