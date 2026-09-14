@@ -13,42 +13,19 @@
   var THEME_KEY = "imerologio-theme";
 
   /* ---------- Ορισμός γευμάτων ---------- */
+  /* Ένα ελεύθερο πεδίο ανά γεύμα — γράφεις όλο το γεύμα μαζί */
   var MEALS = [
-    { id: "proino",  name: "Πρωινό",       type: "3άδα", emoji: "🌅",
-      slots: [
-        { id: "kyrios", label: "Κυρίως",             dl: "dl-kyrios" },
-        { id: "gliko",  label: "Επιδόρπιο / Γλυκό",  dl: "dl-gliko", opt: true }
-      ]},
-    { id: "progevma", name: "Προγεύμα",    type: "2άδα", emoji: "🍎",
-      slots: [
-        { id: "fruit", label: "Φρέσκα ή ξερά φρούτα", dl: "dl-fruit" },
-        { id: "snack", label: "Snack",                dl: "dl-snack" }
-      ]},
-    { id: "gevma",   name: "Γεύμα",        type: "3άδα", emoji: "☀️",
-      slots: [
-        { id: "kyrios", label: "Κυρίως",             dl: "dl-kyrios" },
-        { id: "gliko",  label: "Επιδόρπιο / Γλυκό",  dl: "dl-gliko", opt: true }
-      ]},
-    { id: "apogevmatino", name: "Απογευματινό", type: "2άδα", emoji: "🥨",
-      slots: [
-        { id: "fruit", label: "Φρέσκα ή ξερά φρούτα", dl: "dl-fruit" },
-        { id: "snack", label: "Snack",                dl: "dl-snack" }
-      ]},
-    { id: "vradino", name: "Βραδινό",      type: "3άδα", emoji: "🌙",
-      slots: [
-        { id: "kyrios", label: "Κυρίως",             dl: "dl-kyrios" },
-        { id: "gliko",  label: "Επιδόρπιο / Γλυκό",  dl: "dl-gliko", opt: true }
-      ]}
+    { id: "proino",       name: "Πρωινό",       type: "3άδα", emoji: "🌅", slots: [{ id: "kyrios", label: "Τι έφαγες;" }] },
+    { id: "progevma",     name: "Προγεύμα",     type: "2άδα", emoji: "🍎", slots: [{ id: "kyrios", label: "Τι έφαγες;" }] },
+    { id: "gevma",        name: "Γεύμα",        type: "3άδα", emoji: "☀️", slots: [{ id: "kyrios", label: "Τι έφαγες;" }] },
+    { id: "apogevmatino", name: "Απογευματινό", type: "2άδα", emoji: "🥨", slots: [{ id: "kyrios", label: "Τι έφαγες;" }] },
+    { id: "vradino",      name: "Βραδινό",      type: "3άδα", emoji: "🌙", slots: [{ id: "kyrios", label: "Τι έφαγες;" }] }
   ];
 
-  var SLOT_SHORT = { kyrios: "Κυρίως", gliko: "Γλυκό", fruit: "Φρούτα", snack: "Snack" };
+  var SLOT_SHORT = { kyrios: "Φαγητό" };
 
   /* Προτάσεις αυτόματης συμπλήρωσης */
   var SUGGESTIONS = {
-    "dl-kyrios": ["Μακαρόνια με κιμά","Κοτόπουλο με ρύζι","Κοτόπουλο με πατάτες","Ψάρι με σαλάτα","Μπριζόλα με πατάτες","Φακές","Φασολάδα","Ρεβίθια","Γεμιστά","Μουσακάς","Παστίτσιο","Σπανακόρυζο","Ομελέτα","Αυγά με ψωμί","Τοστ","Γιαούρτι με βρώμη","Σουβλάκι","Κοτόσουπα","Ψαρόσουπα","Σαλάτα με τόνο","Πίτσα"],
-    "dl-gliko":  ["Παγωτό","Σοκολάτα","Κέικ","Μπισκότα","Κρέπα","Βάφλα","Χαλβάς","Ρυζόγαλο","Γιαούρτι με μέλι","Φρουτοσαλάτα","Φρούτο","Λουκουμάδες","Γκοφρέτα","Κουλουράκια","Τούρτα","Μηλόπιτα"],
-    "dl-fruit":  ["Μήλο","Μπανάνα","Πορτοκάλι","Αχλάδι","Σταφίδες","Χουρμάδες","Δαμάσκηνα ξερά","Βερίκοκα ξερά","Σύκα ξερά","Φράουλες","Ακτινίδιο","Ροδάκινο"],
-    "dl-snack":  ["Αμύγδαλα","Καρύδια","Φουντούκια","Κάσιους","Μπάρα δημητριακών","Κουλούρι","Κράκερ ολικής","Παξιμαδάκια","Ποπ κορν","Ταχίνι με μέλι"],
     "dl-activity": ["Περπάτημα","Τρέξιμο","Γυμναστήριο","Ποδήλατο","Κολύμπι","Yoga","Pilates","Χορός","Βάρη","Ποδόσφαιρο","Μπάσκετ","Τένις","Σκάλες","Διατάσεις"],
     "dl-duration": ["15 λεπτά","20 λεπτά","30 λεπτά","45 λεπτά","1 ώρα","1,5 ώρα","2 ώρες"]
   };
@@ -131,17 +108,22 @@
   }
 
   /* ---------- Αποθήκευση ---------- */
-  var LEGACY_TRIO_SLOTS = ["fresh", "animal", "starch"]; // παλιά δομή συνδυασμών
+  // Παλιότερα πεδία (κατηγορίες συνδυασμών, επιδόρπιο, φρούτα/snack) → συγχώνευση
+  // στο ενιαίο πεδίο του γεύματος ΚΑΤΑ ΤΗΝ ΑΝΑΓΝΩΣΗ. Τίποτα δεν χάνεται και δεν
+  // γίνεται καμία μαζική εγγραφή στο cloud — μια ημέρα ξαναγράφεται μόνο αν την επεξεργαστείς.
+  var LEGACY_MEAL_SLOTS = ["fresh", "animal", "starch", "fruit", "snack", "gliko"];
   function migrateDayShape(d) {
-    // Παλιές καταγραφές (Φρέσκια/Ζωική/Άμυλο) → συγχώνευση στο «Κυρίως»
     if (!d || !d.meals) return d;
-    ["proino", "gevma", "vradino"].forEach(function (mid) {
-      var mm = d.meals[mid];
+    MEALS.forEach(function (m) {
+      var mm = d.meals[m.id];
       if (!mm) return;
-      if (mm.kyrios != null || mm.gliko != null) return; // ήδη νέα δομή
-      var vals = LEGACY_TRIO_SLOTS.map(function (k) { return (mm[k] || "").trim(); }).filter(Boolean);
-      if (vals.length) mm.kyrios = vals.join(" · ");
-      LEGACY_TRIO_SLOTS.forEach(function (k) { delete mm[k]; });
+      var parts = [];
+      if ((mm.kyrios || "").trim()) parts.push(mm.kyrios.trim());
+      LEGACY_MEAL_SLOTS.forEach(function (k) {
+        if ((mm[k] || "").trim()) parts.push(mm[k].trim());
+        delete mm[k];
+      });
+      if (parts.length) mm.kyrios = parts.join("\n"); // κάθε παλιό πεδίο σε δική του γραμμή
     });
     return d;
   }
@@ -281,14 +263,13 @@
       card.dataset.meal = m.id;
       var slotsHtml = m.slots.map(function (s) {
         return '<label class="slot"><span class="slot-label">' + esc(s.label) + '</span>' +
-          '<input type="text" data-meal="' + m.id + '" data-slot="' + s.id + '" list="' + s.dl + '" autocomplete="off" placeholder="…"></label>';
+          '<textarea rows="3" data-meal="' + m.id + '" data-slot="' + s.id + '" autocomplete="off" placeholder="π.χ. τοστ με τυρί, χυμός πορτοκάλι…"></textarea></label>';
       }).join("");
       card.innerHTML =
         '<div class="card-head">' +
           '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(m.name) + '</h2></div>' +
           '<div class="meal-head-right">' +
             '<input type="time" class="meal-time" data-meal="' + m.id + '" title="Ώρα γεύματος" aria-label="Ώρα — ' + esc(m.name) + '">' +
-            '<span class="badge ' + (m.type === "2άδα" ? "duo" : "trio") + '">' + m.type + '</span>' +
             '<span class="check">✓</span>' +
           '</div>' +
         '</div>' +
@@ -318,7 +299,7 @@
     var label = DOW[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
     $("dayName").textContent = label + (currentKey === todayKey() ? " · Σήμερα" : "");
 
-    document.querySelectorAll("#mealCards input[data-slot]").forEach(function (inp) {
+    document.querySelectorAll("#mealCards [data-slot]").forEach(function (inp) {
       inp.value = (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "";
     });
     document.querySelectorAll("#mealCards .meal-time").forEach(function (inp) {
@@ -351,7 +332,7 @@
   }
   function saveCurrentDay() {
     var day = getDay(currentKey);
-    document.querySelectorAll("#mealCards input[data-slot]").forEach(function (inp) {
+    document.querySelectorAll("#mealCards [data-slot]").forEach(function (inp) {
       if (!day.meals[inp.dataset.meal]) day.meals[inp.dataset.meal] = {};
       day.meals[inp.dataset.meal][inp.dataset.slot] = inp.value.trim();
     });
@@ -439,14 +420,17 @@
     html += "</tr></thead><tbody>";
 
     MEALS.forEach(function (m) {
-      html += "<tr><th><span class='b'>" + m.emoji + " " + esc(m.name) + "</span>" + m.type + "</th>";
+      html += "<tr><th><span class='b'>" + m.emoji + " " + esc(m.name) + "</span></th>";
       keys.forEach(function (k) {
         var day = db[k];
         var cell = "";
         if (day && day.meals && day.meals[m.id]) {
           var parts = m.slots.map(function (s) {
             var v = (day.meals[m.id][s.id] || "").trim();
-            return v ? "<span class='l'>" + esc(SLOT_SHORT[s.id]) + ":</span>" + esc(v) : "";
+            if (!v) return "";
+            return m.slots.length === 1
+              ? esc(v).replace(/\n/g, "<br>")
+              : "<span class='l'>" + esc(SLOT_SHORT[s.id]) + ":</span>" + esc(v);
           }).filter(Boolean);
           var tm = ((day.times || {})[m.id] || "").trim();
           if (tm) parts.unshift("<span class='l'>🕐 " + esc(tm) + "</span>");
@@ -561,7 +545,10 @@
       var rows = MEALS.map(function (m) {
         var vals = m.slots.map(function (s) {
           var v = (d.meals[m.id] || {})[s.id] || "";
-          return v ? "<span class='part'><b>" + esc(SLOT_SHORT[s.id]) + ":</b> " + esc(v) + "</span>" : "";
+          if (!v) return "";
+          return m.slots.length === 1
+            ? "<span class='part'>" + esc(v).replace(/\n/g, "<br>") + "</span>"
+            : "<span class='part'><b>" + esc(SLOT_SHORT[s.id]) + ":</b> " + esc(v) + "</span>";
         }).filter(Boolean).join("");
         var tm = ((d.times || {})[m.id] || "").trim();
         var label = m.emoji + " " + esc(m.name) + (tm ? " <span class='htime'>🕐 " + esc(tm) + "</span>" : "");
@@ -698,7 +685,7 @@
               if (d.meals && d.meals[m.id]) {
                 m.slots.forEach(function (s) {
                   var v = (d.meals[m.id][s.id] || "").trim();
-                  if (v) lines.push(SLOT_SHORT[s.id] + ": " + v);
+                  if (v) lines.push(m.slots.length === 1 ? v : SLOT_SHORT[s.id] + ": " + v);
                 });
               }
             }
