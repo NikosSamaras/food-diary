@@ -8,11 +8,11 @@
 <meta name="theme-color" content="#2f7d63">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ημερολόγιο">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
@@ -77,6 +77,24 @@
           <span class="slot-label">Διάρκεια</span>
           <input type="text" id="actDuration" list="dl-duration" placeholder="π.χ. 45 λεπτά" autocomplete="off">
         </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Νυχτερινός Ύπνος</h2>
+      </div>
+      <div class="water">
+        <span class="slot-label">Ώρες ύπνου</span>
+        <div class="water-ctl">
+          <input type="number" id="sleepHours" min="0" max="24" step="0.5" inputmode="decimal" placeholder="0">
+          <span class="water-unit">ώρες</span>
+          <button class="ghost-btn tiny" type="button" data-sleeph="6">6</button>
+          <button class="ghost-btn tiny" type="button" data-sleeph="7">7</button>
+          <button class="ghost-btn tiny" type="button" data-sleeph="8">8</button>
+          <button class="ghost-btn tiny" type="button" data-sleeph="9">9</button>
+          <button class="ghost-btn tiny" id="sleepReset" type="button">Μηδενισμός</button>
+        </div>
       </div>
     </div>
 
@@ -258,7 +276,12 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="xlsx.js"></script>
-<script src="app.js"></script>
+<script src="xlsx.js?v=8"></script>
+<script src="app.js?v=8"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+</script>
 </body>
 </html>
