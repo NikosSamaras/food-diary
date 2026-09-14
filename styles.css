@@ -205,6 +205,17 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 .slot input:focus,.slot textarea:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
 .slot textarea{resize:vertical}
 
+/* ---------- combo hints (3άδα/2άδα) ---------- */
+.combo-hint{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.combo-hint:empty{display:none}
+.cchip{
+  font-size:.72rem;font-weight:700;letter-spacing:.02em;
+  padding:3px 9px;border-radius:999px;
+  background:var(--surface-2);color:var(--muted);border:1px solid var(--line);
+}
+.cchip.on{background:var(--brand-soft);color:var(--brand-strong);border-color:var(--brand)}
+.cchip.full{background:var(--brand);color:#fff;border-color:var(--brand)}
+
 /* ---------- activities ---------- */
 .acts{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
 .act-row{display:grid;grid-template-columns:2fr 1fr 1.4fr auto;gap:9px;align-items:end}
