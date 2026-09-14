@@ -64,20 +64,8 @@
       <div class="card-head">
         <h2>Φυσική Δραστηριότητα</h2>
       </div>
-      <div class="slots">
-        <label class="slot">
-          <span class="slot-label">Είδος</span>
-          <input type="text" id="actType" list="dl-activity" placeholder="π.χ. περπάτημα, γυμναστήριο…" autocomplete="off">
-        </label>
-        <label class="slot">
-          <span class="slot-label">Ώρα</span>
-          <input type="time" id="actTime">
-        </label>
-        <label class="slot">
-          <span class="slot-label">Διάρκεια</span>
-          <input type="text" id="actDuration" list="dl-duration" placeholder="π.χ. 45 λεπτά" autocomplete="off">
-        </label>
-      </div>
+      <div id="actList" class="acts"></div>
+      <button class="ghost-btn tiny" id="actAdd" type="button">➕ Προσθήκη δραστηριότητας</button>
     </div>
 
     <div class="card">
