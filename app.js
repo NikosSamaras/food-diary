@@ -617,6 +617,22 @@
       var card = document.querySelector('.meal-card[data-meal="' + m.id + '"]');
       if (card) card.classList.toggle("done", mealDone(day, m));
     });
+    updatePlate(day);
+  }
+
+  /* Τροφοδοτεί το ζωντανό 3D πιάτο με τις κατηγορίες όλης της ημέρας */
+  function updatePlate(day) {
+    var st = { fresh: false, animal: false, starch: false, done: mealsDoneCount(day), total: MEALS.length };
+    MEALS.forEach(function (m) {
+      var txt = (day.meals[m.id] || {}).kyrios || "";
+      if (!txt.trim()) return;
+      var c = foodCategories(txt);
+      if (c.veg || c.fruit) st.fresh = true;
+      if (c.animal) st.animal = true;
+      if (c.starch || c.nuts) st.starch = true;
+    });
+    window.__plateState = st;
+    if (window.Plate3D) window.Plate3D.update();
   }
 
   /* Αποθήκευση καθώς γράφεις */
