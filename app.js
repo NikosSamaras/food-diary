@@ -1081,10 +1081,10 @@
       profiles.users.forEach(function (x) { if (x.id === uid) u = x; });
       if (!u) return;
       var days = userDayCount(uid);
-      if (!confirm("Να διαγραφεί ο χρήστης «" + u.name + "»" + (days ? " και οι " + days + " καταγεγραμμένες ημέρες του" : "") + "; Δεν υπάρχει επαναφορά.")) return;
+      // Διπλή επιβεβαίωση· τα δεδομένα ΔΕΝ διαγράφονται — μένουν στη βάση για επαναφορά
+      if (!confirm("Να διαγραφεί ο λογαριασμός «" + u.name + "»" + (days ? " (" + days + " καταγεγραμμένες ημέρες)" : "") + ";")) return;
+      if (!confirm("Σίγουρα; Ο λογαριασμός «" + u.name + "» θα φύγει από τη λίστα σε όλες τις συσκευές.\n\nΟι καταγραφές του ΔΕΝ διαγράφονται — μένουν αποθηκευμένες στη βάση και μπορούν να επανέλθουν.")) return;
       profiles.users = profiles.users.filter(function (x) { return x.id !== uid; });
-      try { localStorage.removeItem(storeKeyFor(uid)); } catch (err) {}
-      wipeRemoteDays(uid);
       if (profiles.current === uid) {
         profiles.current = profiles.users[0].id;
         db = loadDb();
@@ -1095,7 +1095,7 @@
       persistProfiles();
       pushProfiles();
       renderUserList();
-      toast("Ο χρήστης διαγράφηκε");
+      toast("Ο λογαριασμός αφαιρέθηκε — τα δεδομένα του φυλάχθηκαν 🗄️");
       return;
     }
     var row = e.target.closest("[data-user]");
