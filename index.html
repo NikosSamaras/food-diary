@@ -70,7 +70,7 @@
 
     <div class="card">
       <div class="card-head">
-        <h2>Νυχτερινός Ύπνος</h2>
+        <h2>Ύπνος &amp; Κενώσεις</h2>
       </div>
       <div class="water">
         <span class="slot-label">Ώρες ύπνου</span>
@@ -82,6 +82,17 @@
           <button class="ghost-btn tiny" type="button" data-sleeph="8">8</button>
           <button class="ghost-btn tiny" type="button" data-sleeph="9">9</button>
           <button class="ghost-btn tiny" id="sleepReset" type="button">Μηδενισμός</button>
+        </div>
+      </div>
+      <div class="water">
+        <span class="slot-label">Κενώσεις</span>
+        <div class="water-ctl">
+          <input type="number" id="kenCount" min="0" max="20" step="1" inputmode="numeric" placeholder="0">
+          <span class="water-unit">φορές</span>
+          <button class="ghost-btn tiny" type="button" data-ken="1">1</button>
+          <button class="ghost-btn tiny" type="button" data-ken="2">2</button>
+          <button class="ghost-btn tiny" type="button" data-ken="3">3</button>
+          <button class="ghost-btn tiny" id="kenReset" type="button">Μηδενισμός</button>
         </div>
       </div>
     </div>
