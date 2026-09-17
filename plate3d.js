@@ -11,6 +11,8 @@
    υπάρχει WebGL απλώς δεν εμφανίζεται (μένει η μπάρα προόδου).
    ============================================================ */
 import * as THREE from "./vendor/three.module.min.js";
+import { GLTFLoader } from "./vendor/GLTFLoader.js";
+import { RoomEnvironment } from "./vendor/RoomEnvironment.js";
 
 var host = document.getElementById("plate3d");
 var wrap = document.getElementById("plateWrap");
@@ -27,9 +29,9 @@ if (host && wrap) {
   var bobT = 0, glow = 0;
 
   var CAT = [
-    { key: "fresh",  color: 0x6fae3f },
-    { key: "animal", color: 0xd4694a },
-    { key: "starch", color: 0xe0a83c }
+    { key: "fresh",  color: 0x9ccf7a },
+    { key: "animal", color: 0xe8a48d },
+    { key: "starch", color: 0xeccb84 }
   ];
   var SEG = (2 * Math.PI) / 3;
   function segStart(i) { return -Math.PI / 2 + i * SEG; }
@@ -48,8 +50,10 @@ if (host && wrap) {
 
     var geo = new THREE.LatheGeometry(profile, 96);
     geo.computeVertexNormals();
-    var mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-      color: 0xfcfefd, roughness: 0.25, metalness: 0.03, side: THREE.DoubleSide
+    var mesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+      color: 0xfcfefd, roughness: 0.14, metalness: 0.0,
+      clearcoat: 0.85, clearcoatRoughness: 0.08,
+      side: THREE.DoubleSide
     }));
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -74,85 +78,79 @@ if (host && wrap) {
     shape.absarc(0, 0, 1.0, segStart(i) + gap, segStart(i) + SEG - gap, false);
     shape.lineTo(0, 0);
     var geo = new THREE.ExtrudeGeometry(shape, {
-      depth: 0.09, curveSegments: 28,
-      bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.022, bevelSegments: 2
+      depth: 0.032, curveSegments: 28,
+      bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.014, bevelSegments: 2
     });
     geo.rotateX(-Math.PI / 2);
     var mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-      color: color, roughness: 0.55, metalness: 0.02
+      color: color, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.35
     }));
-    mesh.position.y = 0.035;
+    mesh.position.y = 0.022;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.scale.setScalar(0.0001);
     return mesh;
   }
 
-  /* Απλά, ευανάγνωστα 3D φαγητά — ένα σύνολο ανά κατηγορία */
-  function buildFood(key, i) {
-    var g = new THREE.Group();
-    var a = segMid(i);
-    // Το σχήμα περιστράφηκε κατά -90° στον X, οπότε η Y του σχήματος έγινε -Z
-    var cx = Math.cos(a) * 0.46;
-    var cz = -Math.sin(a) * 0.46;
-    var k, m;
+  /* ---------- πραγματικά μοντέλα φαγητού (Blender → GLB) ---------- */
 
-    if (key === "fresh") {
-      var veg = [
-        [0x7cc142, 0.185, -0.13, -0.10],
-        [0xd23b3b, 0.150,  0.14, -0.08],
-        [0x9ad855, 0.130, -0.08,  0.14],
-        [0xe0632f, 0.115,  0.12,  0.13]
-      ];
-      for (k = 0; k < veg.length; k++) {
-        m = new THREE.Mesh(new THREE.IcosahedronGeometry(veg[k][1], 1), mat(veg[k][0], 0.45));
-        m.position.set(cx + veg[k][2], 0.12 + veg[k][1] * 0.85, cz + veg[k][3]);
-        m.rotation.set(k * 0.7, k * 1.1, k * 0.4);
-        m.castShadow = true;
-        g.add(m);
-      }
-    } else if (key === "animal") {
-      var fillet = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.24, 4, 14), mat(0xdf8a68, 0.6));
-      fillet.rotation.z = Math.PI / 2;
-      fillet.rotation.y = 0.45;
-      fillet.position.set(cx - 0.04, 0.25, cz - 0.08);
-      fillet.castShadow = true;
-      g.add(fillet);
+  /* Πού κάθεται το κάθε φαγητό μέσα στο τμήμα του πιάτου:
+     [όνομα μοντέλου, μετατόπιση x, μετατόπιση z, κλίμακα, στροφή] */
+  var LAYOUT = {
+    fresh: [
+      ["lettuce",  -0.01,  0.03, 0.58, 0.4, 0.00],
+      ["tomato",    0.14, -0.06, 0.32, 0.0, 0.03],
+      ["broccoli", -0.13,  0.02, 0.44, 0.8, 0.03],
+      ["carrot",    0.04,  0.18, 0.42, 2.3, 0.03]
+    ],
+    animal: [
+      ["salmon", -0.10, -0.09, 0.72, 0.5, 0.00],
+      ["egg",     0.11,  0.16, 0.44, 0.0, 0.00]
+    ],
+    starch: [
+      ["bread",   0.00, -0.06, 0.46, 0.3, 0.00],
+      ["almond", -0.18,  0.17, 0.42, 0.9, 0.00],
+      ["almond",  0.15,  0.19, 0.42, 2.1, 0.00],
+      ["almond",  0.00,  0.26, 0.42, 4.0, 0.00]
+    ]
+  };
 
-      var white = new THREE.Mesh(new THREE.SphereGeometry(0.155, 22, 16), mat(0xfdfaf3, 0.35));
-      white.scale.y = 0.62;
-      white.position.set(cx + 0.07, 0.19, cz + 0.17);
-      white.castShadow = true;
-      g.add(white);
+  /* Τοποθετεί ένα μοντέλο ώστε η βάση του να ακουμπά ακριβώς στο τμήμα */
+  function placeOn(model, x, z, y0, scale, rotY) {
+    var o = model.clone(true);
+    o.scale.setScalar(scale);
+    o.rotation.y = rotY;
+    o.updateMatrixWorld(true);
+    var box = new THREE.Box3().setFromObject(o);
+    o.position.set(x, y0 - box.min.y, z);
+    o.traverse(function (n) {
+      if (!n.isMesh) return;
+      n.castShadow = true;
+      n.receiveShadow = true;
+      n.material = n.material.clone();
+      n.material.envMapIntensity = 0.45;   // κρατά τα χρώματα ζωντανά
+    });
+    return o;
+  }
 
-      var yolk = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), mat(0xf2b134, 0.4));
-      yolk.scale.y = 0.55;
-      yolk.position.set(cx + 0.07, 0.235, cz + 0.17);
-      g.add(yolk);
-    } else {
-      var roll = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 18), mat(0xd8a15a, 0.62));
-      roll.scale.set(1.15, 0.72, 0.85);
-      roll.position.set(cx - 0.01, 0.24, cz - 0.05);
-      roll.castShadow = true;
-      g.add(roll);
-
-      var slash = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.012, 0.03), mat(0xb9823f, 0.7));
-      slash.position.set(cx - 0.01, 0.375, cz - 0.05);
-      slash.rotation.y = 0.35;
-      g.add(slash);
-
-      var nuts = [[-0.16, 0.17], [0.14, 0.18], [0.01, 0.23]];
-      for (k = 0; k < nuts.length; k++) {
-        m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.075, 0), mat(0xc9a06a, 0.55));
-        m.position.set(cx + nuts[k][0], 0.19, cz + nuts[k][1]);
-        m.rotation.set(k, k * 1.4, k * 0.6);
-        m.castShadow = true;
-        g.add(m);
-      }
-    }
-
-    g.scale.setScalar(0.0001);
-    return g;
+  function loadFood() {
+    new GLTFLoader().load("./assets/food.glb?v=11", function (gltf) {
+      var lib = {};
+      gltf.scene.children.slice().forEach(function (child) {
+        lib[child.name] = child;
+      });
+      CAT.forEach(function (c, i) {
+        var a = segMid(i);
+        var cx = Math.cos(a) * 0.50;
+        var cz = -Math.sin(a) * 0.50;
+        (LAYOUT[c.key] || []).forEach(function (item) {
+          var model = lib[item[0]];
+          if (!model) return;
+          foods[c.key].add(placeOn(model, cx + item[1], cz + item[2], 0.082 + item[5], item[3], item[4]));
+        });
+      });
+      start();
+    }, undefined, function () { /* χωρίς μοντέλα: μένουν μόνο τα χρωματιστά τμήματα */ });
   }
 
   /* ---------- σκηνή ---------- */
@@ -170,17 +168,23 @@ if (host && wrap) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 0.86;
     host.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
+
+    // Φωτισμός περιβάλλοντος: δίνει αληθινές αντανακλάσεις στα υλικά
+    var pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+
     camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
     camera.position.set(0, 2.18, 2.98);
     camera.lookAt(0, 0.05, 0);
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x4d5f57, 1.15));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x4d5f57, 0.28));
 
-    var key = new THREE.DirectionalLight(0xffffff, 2.1);
+    var key = new THREE.DirectionalLight(0xfff6e8, 1.45);
     key.position.set(2.6, 5.2, 3.2);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
@@ -194,7 +198,7 @@ if (host && wrap) {
     key.shadow.radius = 3;
     scene.add(key);
 
-    var fill = new THREE.DirectionalLight(0xdfeee8, 0.55);
+    var fill = new THREE.DirectionalLight(0xdfeee8, 0.22);
     fill.position.set(-3, 2.2, -2.4);
     scene.add(fill);
 
@@ -207,7 +211,8 @@ if (host && wrap) {
 
     CAT.forEach(function (c, i) {
       wedges[c.key] = buildWedge(i, c.color);
-      foods[c.key] = buildFood(c.key, i);
+      foods[c.key] = new THREE.Group();
+      foods[c.key].scale.setScalar(0.0001);
       root.add(wedges[c.key]);
       root.add(foods[c.key]);
     });
@@ -223,6 +228,7 @@ if (host && wrap) {
 
     resize();
     wrap.classList.add("on");
+    loadFood();
     return true;
   }
 
@@ -322,21 +328,23 @@ if (host && wrap) {
     if (document.hidden) stop(); else start();
   });
 
-  if (window.IntersectionObserver) {
-    new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { if (en.isIntersecting) start(); else stop(); });
-    }, { threshold: 0.05 }).observe(host);
-  }
-  if (window.ResizeObserver) {
-    new ResizeObserver(function () { resize(); }).observe(host);
-  } else {
-    window.addEventListener("resize", resize);
-  }
-
   /* ---------- εκκίνηση ---------- */
 
   if (boot()) {
     window.Plate3D = { update: apply, start: start, stop: stop };
     apply();
+
+    // Οι παρατηρητές μπαίνουν ΜΕΤΑ την εμφάνιση του πιάτου: αν δηλωθούν
+    // νωρίτερα, μετρούν το ακόμη κρυφό στοιχείο και σταματούν την κίνηση.
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () { resize(); }).observe(host);
+    } else {
+      window.addEventListener("resize", resize);
+    }
+    if (window.IntersectionObserver) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) start(); else stop(); });
+      }, { threshold: 0 }).observe(host);
+    }
   }
 }
