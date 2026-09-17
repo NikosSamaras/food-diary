@@ -11,6 +11,145 @@
   var LEGACY_STORE_KEY = "imerologio-diatrofis-v1"; // δεδομένα πριν την εισαγωγή χρηστών
   var PROFILES_KEY = "imerologio-profiles-v1";
   var THEME_KEY = "imerologio-theme";
+  var LANG_KEY = "imerologio-lang";
+
+  /* ============================================================
+     Γλώσσα (ΕΛ/EN) — οι μεταφράσεις όλου του περιβάλλοντος.
+     Το Excel «μορφή εντύπου» μένει πάντα ελληνικό (αντίγραφο του Word).
+     ============================================================ */
+  var lang = "el";
+  try { lang = localStorage.getItem(LANG_KEY) === "en" ? "en" : "el"; } catch (e) {}
+  var T = {
+    el: {
+      tab_day: "Ημέρα", tab_week: "Εβδομάδα", tab_history: "Ιστορικό", tab_guide: "Οδηγός", tab_export: "Εξαγωγή",
+      today_btn: "Σήμερα", today_suffix: " · Σήμερα",
+      progress: "{n} από {t} γεύματα συμπληρωμένα", saved: "Αποθηκεύτηκε ✓",
+      meal_proino: "Πρωινό", meal_progevma: "Προγεύμα", meal_gevma: "Γεύμα", meal_apogevmatino: "Απογευματινό", meal_vradino: "Βραδινό",
+      what_ate: "Τι έφαγες;", meal_ph: "π.χ. τοστ με τυρί, χυμός πορτοκάλι…", meal_time: "Ώρα γεύματος",
+      chip_fresh: "Φρέσκια", chip_animal: "Ζωική", chip_starch: "Άμυλο/Καρποί", chip_fruit: "Φρούτα", chip_snack: "Snack/Καρποί",
+      tag3: "3άδα", tag2: "2άδα",
+      act_title: "Φυσική Δραστηριότητα", act_type: "Είδος", act_time: "Ώρα", act_dur: "Διάρκεια",
+      act_type_ph: "π.χ. περπάτημα, γυμναστήριο…", act_dur_ph: "π.χ. 45 λεπτά",
+      act_add: "➕ Προσθήκη δραστηριότητας", act_del: "Αφαίρεση δραστηριότητας",
+      sk_title: "Ύπνος & Κενώσεις", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
+      wn_title: "Νερό & Σημειώσεις", wn_water: "Νερό", notes_label: "Σημειώσεις ημέρας", notes_ph: "Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…",
+      clear_day: "Καθαρισμός ημέρας",
+      week_hint: "Πάτησε σε οποιοδήποτε κελί για να επεξεργαστείς εκείνη την ημέρα.",
+      week_this: "Τρέχουσα", week_export: "Εξαγωγή εβδομάδας σε Excel", week_meal_col: "Γεύμα",
+      week_extra: "🌙 Ύπνος · 🚽 Κεν. · 💧 Νερό", week_act: "🏃 Φυσική Δραστ.",
+      hist_search_ph: "Αναζήτηση τροφής, δραστηριότητας, σημείωσης…", all_months: "Όλοι οι μήνες",
+      st_days: "καταγεγραμμένες ημέρες", st_full: "πλήρεις ημέρες (5/5)", st_act: "ημέρες με δραστηριότητα",
+      st_water: "μ.ό. ml νερού / ημέρα", st_sleep: "μ.ό. ώρες ύπνου 🌙", st_ken: "μ.ό. κενώσεις / ημέρα 🚽", st_streak: "σερί ημερών 🔥",
+      hist_empty: "Δεν υπάρχουν καταγραφές{f}.<br>Ξεκίνα από την καρτέλα «Ημέρα»! 🍽️", hist_empty_f: " με αυτά τα φίλτρα", hist_empty_yet: " ακόμη",
+      hist_edit: "✏️ Επεξεργασία", hist_empty_day: "Κενή ημέρα",
+      h_act: "🏃 Δραστηριότητα", h_sleep: "🌙 Ύπνος", h_ken: "🚽 Κενώσεις", h_water: "💧 Νερό", h_notes: "📝 Σημειώσεις",
+      hour1: " ώρα", hourN: " ώρες", time1: " φορά", timeN: " φορές",
+      exp_title: "Εξαγωγή σε Excel", exp_hint: "Διάλεξε εύρος ημερομηνιών και κατέβασε αρχείο .xlsx που ανοίγει απευθείας στο Excel.",
+      exp_from: "Από", exp_to: "Έως", range_all: "Όλα", range_month: "Τρέχων μήνας",
+      btn_detail: "📊 Excel — αναλυτικός πίνακας", btn_cal: "📅 Excel — μορφή ημερολογίου", btn_csv: "CSV (.csv)", btn_print: "Εκτύπωση / PDF",
+      backup_title: "Αντίγραφο ασφαλείας", backup_hint: "Με ενεργό συγχρονισμό τα δεδομένα αποθηκεύονται και online. Το αντίγραφο .json παραμένει χρήσιμο ως εφεδρεία.",
+      backup_dl: "⬇ Λήψη αντιγράφου (.json)", backup_up: "⬆ Εισαγωγή αντιγράφου",
+      sync_title: "☁️ Online συγχρονισμός", sync_change: "Ορισμός / αλλαγή κωδικού οικογένειας", sync_off_btn: "Απενεργοποίηση συγχρονισμού",
+      wipe_title: "Διαγραφή όλων", wipe_hint: "Σβήνει οριστικά όλες τις καταγραφές από αυτόν τον browser.", wipe_btn: "Διαγραφή όλων των δεδομένων",
+      foot_none: "Καμία καταγραφή ακόμη", foot_days: "{n} καταγεγραμμένες ημέρες · πρώτη: {d}",
+      who: "👤 Ποιος καταγράφει;", users_title: "👤 Χρήστες", u_active: " · ενεργός", u_day1: " ημέρα", u_dayN: " ημέρες",
+      new_user_ph: "Όνομα νέου χρήστη…", create_btn: "➕ Δημιουργία",
+      user_hint: "Κάθε χρήστης έχει το δικό του ημερολόγιο σε αυτή τη συσκευή.",
+      del_user_title: "Διαγραφή χρήστη",
+      no_range: "Δεν υπάρχουν καταγραφές σε αυτό το εύρος.",
+      xlsx_ok: "Το Excel κατέβηκε ✓", csv_ok: "Το CSV κατέβηκε ✓", backup_ok: "Το αντίγραφο κατέβηκε ✓",
+      import_ok: "Η εισαγωγή ολοκληρώθηκε ✓", import_n: "Εισήχθησαν {n} ημέρες ✓", import_bad: "Μη έγκυρο αρχείο αντιγράφου.", import_bad_t: "Μη έγκυρο αρχείο",
+      day_cleared: "Η ημέρα καθαρίστηκε", all_deleted: "Όλα τα δεδομένα διαγράφηκαν",
+      user_toast: "Χρήστης: ", user_created: "Δημιουργήθηκε ο χρήστης «{n}» ✓", user_removed: "Ο λογαριασμός αφαιρέθηκε — τα δεδομένα του φυλάχθηκαν 🗄️",
+      user_exists: "Υπάρχει ήδη χρήστης με αυτό το όνομα", name_min: "Βάλε κωδικό τουλάχιστον 4 χαρακτήρων",
+      c_clear: "Να διαγραφούν όλες οι καταχωρήσεις της ημέρας {d};",
+      c_del1: "Να διαγραφεί ο λογαριασμός «{n}»{d};", c_del1_days: " ({n} καταγεγραμμένες ημέρες)",
+      c_del2: "Σίγουρα; Ο λογαριασμός «{n}» θα φύγει από τη λίστα σε όλες τις συσκευές.\n\nΟι καταγραφές του ΔΕΝ διαγράφονται — μένουν αποθηκευμένες στη βάση και μπορούν να επανέλθουν.",
+      c_wipe1: "ΠΡΟΣΟΧΗ: Θα διαγραφούν ΟΛΕΣ οι καταγραφές του χρήστη «{n}» οριστικά. Συνέχεια;",
+      c_wipe2: "Σίγουρα; Δεν υπάρχει επαναφορά (εκτός αν έχεις αντίγραφο .json).",
+      sync_on: "☁️ Συγχρονισμός ενεργός ✓", sync_run: "☁️ Συγχρονισμός…", sync_err: "☁️ Σφάλμα συγχρονισμού — τα δεδομένα μένουν τοπικά",
+      sync_noload: "Ο συγχρονισμός δεν φόρτωσε (χωρίς σύνδεση;)", sync_none: "Χωρίς online συγχρονισμό",
+      x_date: "Ημερομηνία", x_day: "Ημέρα", x_time: "Ώρα", x_food: "Φαγητό",
+      x_act_time: "Δραστηριότητα (ώρα)", x_act_type: "Δραστηριότητα (είδος)", x_act_dur: "Δραστηριότητα (διάρκεια)",
+      x_sleep: "Ύπνος (ώρες)", x_ken: "Κενώσεις", x_water: "Νερό (ml)", x_notes: "Σημειώσεις", x_time_pfx: "Ώρα",
+      sc_off: "Απενεργοποιημένος — τα δεδομένα μένουν μόνο σε αυτή τη συσκευή.",
+      sc_code: "Κωδικός οικογένειας: «{c}». ", sc_tail: "Τα δεδομένα συγχρονίζονται μέσω cloud (Firebase).",
+      sc_none: "Δεν έχει οριστεί κωδικός οικογένειας."
+    },
+    en: {
+      tab_day: "Day", tab_week: "Week", tab_history: "History", tab_guide: "Guide", tab_export: "Export",
+      today_btn: "Today", today_suffix: " · Today",
+      progress: "{n} of {t} meals filled", saved: "Saved ✓",
+      meal_proino: "Breakfast", meal_progevma: "Morning snack", meal_gevma: "Lunch", meal_apogevmatino: "Afternoon snack", meal_vradino: "Dinner",
+      what_ate: "What did you eat?", meal_ph: "e.g. cheese toast, orange juice…", meal_time: "Meal time",
+      chip_fresh: "Fresh", chip_animal: "Animal", chip_starch: "Starch/Nuts", chip_fruit: "Fruit", chip_snack: "Snack/Nuts",
+      tag3: "Trio", tag2: "Duo",
+      act_title: "Physical Activity", act_type: "Type", act_time: "Time", act_dur: "Duration",
+      act_type_ph: "e.g. walking, gym…", act_dur_ph: "e.g. 45 minutes",
+      act_add: "➕ Add activity", act_del: "Remove activity",
+      sk_title: "Sleep & Bowel Movements", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
+      wn_title: "Water & Notes", wn_water: "Water", notes_label: "Day notes", notes_ph: "How you felt, hunger, sleep, anything else…",
+      clear_day: "Clear day",
+      week_hint: "Tap any cell to edit that day.",
+      week_this: "This week", week_export: "Export week to Excel", week_meal_col: "Meal",
+      week_extra: "🌙 Sleep · 🚽 BM · 💧 Water", week_act: "🏃 Activity",
+      hist_search_ph: "Search food, activity, note…", all_months: "All months",
+      st_days: "recorded days", st_full: "complete days (5/5)", st_act: "days with activity",
+      st_water: "avg ml water / day", st_sleep: "avg sleep hours 🌙", st_ken: "avg bowel mov. / day 🚽", st_streak: "day streak 🔥",
+      hist_empty: "No entries{f}.<br>Start from the “Day” tab! 🍽️", hist_empty_f: " with these filters", hist_empty_yet: " yet",
+      hist_edit: "✏️ Edit", hist_empty_day: "Empty day",
+      h_act: "🏃 Activity", h_sleep: "🌙 Sleep", h_ken: "🚽 Bowel mov.", h_water: "💧 Water", h_notes: "📝 Notes",
+      hour1: " hour", hourN: " hours", time1: " time", timeN: " times",
+      exp_title: "Export to Excel", exp_hint: "Pick a date range and download an .xlsx file that opens directly in Excel.",
+      exp_from: "From", exp_to: "To", range_all: "All", range_month: "This month",
+      btn_detail: "📊 Excel — detailed table", btn_cal: "📅 Excel — booklet layout (Greek)", btn_csv: "CSV (.csv)", btn_print: "Print / PDF",
+      backup_title: "Backup", backup_hint: "With sync on, data is also stored online. The .json backup remains useful as a fallback.",
+      backup_dl: "⬇ Download backup (.json)", backup_up: "⬆ Import backup",
+      sync_title: "☁️ Online sync", sync_change: "Set / change family code", sync_off_btn: "Disable sync",
+      wipe_title: "Delete everything", wipe_hint: "Permanently deletes all entries of the current user.", wipe_btn: "Delete all data",
+      foot_none: "No entries yet", foot_days: "{n} recorded days · first: {d}",
+      who: "👤 Who is logging?", users_title: "👤 Users", u_active: " · active", u_day1: " day", u_dayN: " days",
+      new_user_ph: "New user name…", create_btn: "➕ Create",
+      user_hint: "Each user has their own diary on this device.",
+      del_user_title: "Delete user",
+      no_range: "No entries in this range.",
+      xlsx_ok: "Excel downloaded ✓", csv_ok: "CSV downloaded ✓", backup_ok: "Backup downloaded ✓",
+      import_ok: "Import complete ✓", import_n: "Imported {n} days ✓", import_bad: "Invalid backup file.", import_bad_t: "Invalid file",
+      day_cleared: "Day cleared", all_deleted: "All data deleted",
+      user_toast: "User: ", user_created: "User “{n}” created ✓", user_removed: "Account removed — its data was kept 🗄️",
+      user_exists: "A user with this name already exists", name_min: "Use a code of at least 4 characters",
+      c_clear: "Delete all entries of {d}?",
+      c_del1: "Delete the account “{n}”{d}?", c_del1_days: " ({n} recorded days)",
+      c_del2: "Are you sure? The account “{n}” will disappear from the list on all devices.\n\nIts entries are NOT deleted — they stay stored in the database and can be restored.",
+      c_wipe1: "WARNING: ALL entries of user “{n}” will be permanently deleted. Continue?",
+      c_wipe2: "Are you sure? There is no undo (unless you have a .json backup).",
+      sync_on: "☁️ Sync active ✓", sync_run: "☁️ Syncing…", sync_err: "☁️ Sync error — data stays local",
+      sync_noload: "Sync did not load (offline?)", sync_none: "No online sync",
+      x_date: "Date", x_day: "Day", x_time: "Time", x_food: "Food",
+      x_act_time: "Activity (time)", x_act_type: "Activity (type)", x_act_dur: "Activity (duration)",
+      x_sleep: "Sleep (hours)", x_ken: "Bowel movements", x_water: "Water (ml)", x_notes: "Notes", x_time_pfx: "Time",
+      sc_off: "Disabled — data stays only on this device.",
+      sc_code: "Family code: “{c}”. ", sc_tail: "Data syncs via the cloud (Firebase).",
+      sc_none: "No family code set."
+    }
+  };
+  function t(key) {
+    var v = T[lang] && T[lang][key];
+    if (v == null) v = T.el[key];
+    return v == null ? key : v;
+  }
+  var LOCALE = {
+    el: {
+      dow: ["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"],
+      dowShort: ["Κυρ","Δευ","Τρί","Τετ","Πέμ","Παρ","Σάβ"],
+      months: ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"]
+    },
+    en: {
+      dow: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      dowShort: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+      months: ["January","February","March","April","May","June","July","August","September","October","November","December"]
+    }
+  };
 
   /* ---------- Ορισμός γευμάτων ---------- */
   /* Ένα ελεύθερο πεδίο ανά γεύμα — γράφεις όλο το γεύμα μαζί */
@@ -36,12 +175,12 @@
      ελληνικών στελεχών λέξεων — τοπικά, χωρίς internet.
      ============================================================ */
   var FOOD_LEXICON = {
-    veg:    ["σαλατ","ντοματ","αγγουρ","μπροκολ","καροτ","κολοκυθ","σπανακ","χορτ","λαχαν","παντζαρ","πιπερι","μελιτζαν","μαρουλ","κρεμμυδ","αρακ","φασολακ","μπαμι","αγκιναρ","σπαραγγ","κουνουπιδ","σελιν","ραδικ","βλιτ","ρoκα","ροκα","γεμιστ","μουσακ","χωριατικ","ταμπουλε","μπριαμ","λαδερ"],
-    fruit:  ["μηλ","μπαναν","πορτοκαλ","αχλαδ","φραουλ","σταφυλ","καρπουζ","πεπον","ακτινιδ","ροδακιν","βερικοκ","κερασ","νεκταριν","μανταριν","σταφιδ","χουρμαδ","δαμασκην","συκ","ανανα","μανγκ","φρουτ","κομποστ","βατομουρ","μυρτιλ","αβοκαντ"],
-    animal: ["κοτοπουλ","κοτοσουπ","κοτομπουκ","κοτολετ","μοσχαρ","χοιριν","ψαρ","σολομ","τονο","σαρδελ","γαυρ","τσιπουρ","λαβρακ","μπακαλιαρ","καλαμαρ","χταποδ","μυδ","γαριδ","αυγ","ομελετ","γαλα","γαλατ","γιαουρτ","τυρ","φετα","κασερ","κεφιρ","γαλοπουλ","κιμα","μπιφτεκ","σουβλακ","γυρο","λουκανικ","ζαμπον","μπεικον","κρεα","αρνακ","αρνισι","κατσικ","κυνηγ","παστιτσι","μουσακ","τοστ","κοτατζ","cottage"],
-    starch: ["ψωμ","ρυζ","μακαρον","ζυμαρικ","πατατ","κινοα","βρωμ","φακ","ρεβιθ","φασολ","φασολαδ","παξιμαδ","κριθαρακ","πλιγουρ","κουσκους","τορτιγ","πιτσ","πιτα","νιοκ","λαζαν","σπαγγετ","χυλοπιτ","τραχαν","δημητριακ","μουσλ","φρυγαν","κρουασαν","γεμιστ","παστιτσι","μουσακ","σουβλακ","τοστ","καλαμποκ","αραβοσιτ","πουρε"],
-    nuts:   ["αμυγδαλ","καρυδ","φουντουκ","φυστικ","κασιου","ηλιοσπορ","κολοκυθοσπορ","ταχιν","παστελ"],
-    snack:  ["μπαρ","κουλουρ","κρακερ","παξιμαδακ","ποπκορν","κριτσιν","ρυζογκοφρετ"]
+    veg:    ["σαλατ","ντοματ","αγγουρ","μπροκολ","καροτ","κολοκυθ","σπανακ","χορτ","λαχαν","παντζαρ","πιπερι","μελιτζαν","μαρουλ","κρεμμυδ","αρακ","φασολακ","μπαμι","αγκιναρ","σπαραγγ","κουνουπιδ","σελιν","ραδικ","βλιτ","ρoκα","ροκα","γεμιστ","μουσακ","χωριατικ","ταμπουλε","μπριαμ","λαδερ","salad","tomato","cucumber","broccoli","carrot","spinach","veget","zucchini","pepper","eggplant","lettuce","cabbage","beet","cauliflower","greens"],
+    fruit:  ["μηλ","μπαναν","πορτοκαλ","αχλαδ","φραουλ","σταφυλ","καρπουζ","πεπον","ακτινιδ","ροδακιν","βερικοκ","κερασ","νεκταριν","μανταριν","σταφιδ","χουρμαδ","δαμασκην","συκ","ανανα","μανγκ","φρουτ","κομποστ","βατομουρ","μυρτιλ","αβοκαντ","apple","banana","orange","pear","strawberr","grape","watermelon","melon","kiwi","peach","apricot","cherr","raisin","date","prune","fig","fruit","berr","mango","avocado"],
+    animal: ["κοτοπουλ","κοτοσουπ","κοτομπουκ","κοτολετ","μοσχαρ","χοιριν","ψαρ","σολομ","τονο","σαρδελ","γαυρ","τσιπουρ","λαβρακ","μπακαλιαρ","καλαμαρ","χταποδ","μυδ","γαριδ","αυγ","ομελετ","γαλα","γαλατ","γιαουρτ","τυρ","φετα","κασερ","κεφιρ","γαλοπουλ","κιμα","μπιφτεκ","σουβλακ","γυρο","λουκανικ","ζαμπον","μπεικον","κρεα","αρνακ","αρνισι","κατσικ","κυνηγ","παστιτσι","μουσακ","τοστ","κοτατζ","cottage","chicken","beef","pork","fish","salmon","tuna","egg","omelet","milk","yogurt","yoghurt","cheese","turkey","shrimp","mince","burger","steak","meat","lamb","sausage","ham","bacon","gyros","feta"],
+    starch: ["ψωμ","ρυζ","μακαρον","ζυμαρικ","πατατ","κινοα","βρωμ","φακ","ρεβιθ","φασολ","φασολαδ","παξιμαδ","κριθαρακ","πλιγουρ","κουσκους","τορτιγ","πιτσ","πιτα","νιοκ","λαζαν","σπαγγετ","χυλοπιτ","τραχαν","δημητριακ","μουσλ","φρυγαν","κρουασαν","γεμιστ","παστιτσι","μουσακ","σουβλακ","τοστ","καλαμποκ","αραβοσιτ","πουρε","bread","rice","pasta","spaghetti","macaroni","potato","quinoa","oat","lentil","chickpea","bean","rusk","bulgur","couscous","tortilla","pizza","pita","gnocchi","lasagn","cereal","muesli","toast","fries","corn","puree","noodle"],
+    nuts:   ["αμυγδαλ","καρυδ","φουντουκ","φυστικ","κασιου","ηλιοσπορ","κολοκυθοσπορ","ταχιν","παστελ","almond","walnut","hazelnut","peanut","cashew","pistachio","tahini"],
+    snack:  ["μπαρ","κουλουρ","κρακερ","παξιμαδακ","ποπκορν","κριτσιν","ρυζογκοφρετ","bar","cracker","pretzel","popcorn","breadstick","ricecake"]
   };
   function normGr(s) {
     return String(s || "").toLowerCase()
@@ -63,22 +202,23 @@
     var c = foodCategories(text);
     if (meal.type === "2άδα") {
       var parts2 = [
-        { label: "Φρούτα", ok: c.fruit },
-        { label: "Snack/Καρποί", ok: c.snack || c.nuts }
+        { label: t("chip_fruit"), ok: c.fruit },
+        { label: t("chip_snack"), ok: c.snack || c.nuts }
       ];
-      return { parts: parts2, complete: parts2.every(function (p) { return p.ok; }), tag: "2άδα" };
+      return { parts: parts2, complete: parts2.every(function (p) { return p.ok; }), tag: t("tag2") };
     }
     var parts3 = [
-      { label: "Φρέσκια", ok: c.veg || c.fruit },
-      { label: "Ζωική", ok: c.animal },
-      { label: "Άμυλο/Καρποί", ok: c.starch || c.nuts }
+      { label: t("chip_fresh"), ok: c.veg || c.fruit },
+      { label: t("chip_animal"), ok: c.animal },
+      { label: t("chip_starch"), ok: c.starch || c.nuts }
     ];
-    return { parts: parts3, complete: parts3.every(function (p) { return p.ok; }), tag: "3άδα" };
+    return { parts: parts3, complete: parts3.every(function (p) { return p.ok; }), tag: t("tag3") };
   }
 
-  var DOW = ["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
-  var DOW_SHORT = ["Κυρ","Δευ","Τρί","Τετ","Πέμ","Παρ","Σάβ"];
-  var MONTHS = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
+  var DOW = LOCALE[lang].dow;
+  var DOW_SHORT = LOCALE[lang].dowShort;
+  var MONTHS = LOCALE[lang].months;
+  function mealName(m) { return t("meal_" + m.id); }
 
   /* ---------- Βοηθητικά ---------- */
   function $(id) { return document.getElementById(id); }
@@ -289,6 +429,33 @@
     window.scrollTo({ top: 0 });
   }
 
+  /* ---------- Εφαρμογή γλώσσας ---------- */
+  function applyLang() {
+    document.documentElement.lang = lang;
+    DOW = LOCALE[lang].dow;
+    DOW_SHORT = LOCALE[lang].dowShort;
+    MONTHS = LOCALE[lang].months;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.getAttribute("data-i18n-ph")); });
+    $("langBtn").textContent = lang === "el" ? "EN" : "ΕΛ";
+  }
+  $("langBtn").addEventListener("click", function () {
+    lang = lang === "el" ? "en" : "el";
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    applyLang();
+    buildMealCards();
+    renderDay();
+    renderWeek();
+    renderHistory();
+    updateFootStats();
+    updateSyncCard();
+    renderUserButton();
+    if (!$("userOverlay").hidden) {
+      $("userModalTitle").textContent = lockedPick ? t("who") : t("users_title");
+      renderUserList();
+    }
+  });
+
   /* ---------- Θέμα ---------- */
   function applyTheme(t) {
     if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
@@ -316,14 +483,14 @@
       card.className = "card meal-card" + (m.type === "2άδα" ? " duo" : "");
       card.dataset.meal = m.id;
       var slotsHtml = m.slots.map(function (s) {
-        return '<label class="slot"><span class="slot-label">' + esc(s.label) + '</span>' +
-          '<textarea rows="3" data-meal="' + m.id + '" data-slot="' + s.id + '" autocomplete="off" placeholder="π.χ. τοστ με τυρί, χυμός πορτοκάλι…"></textarea></label>';
+        return '<label class="slot"><span class="slot-label">' + esc(t("what_ate")) + '</span>' +
+          '<textarea rows="3" data-meal="' + m.id + '" data-slot="' + s.id + '" autocomplete="off" placeholder="' + esc(t("meal_ph")) + '"></textarea></label>';
       }).join("");
       card.innerHTML =
         '<div class="card-head">' +
-          '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(m.name) + '</h2></div>' +
+          '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(mealName(m)) + '</h2></div>' +
           '<div class="meal-head-right">' +
-            '<input type="time" class="meal-time" data-meal="' + m.id + '" title="Ώρα γεύματος" aria-label="Ώρα — ' + esc(m.name) + '">' +
+            '<input type="time" class="meal-time" data-meal="' + m.id + '" title="' + esc(t("meal_time")) + '" aria-label="' + esc(t("meal_time")) + ' — ' + esc(mealName(m)) + '">' +
             '<span class="check">✓</span>' +
           '</div>' +
         '</div>' +
@@ -350,13 +517,13 @@
   /* Φυσικές δραστηριότητες — δυναμική λίστα (προσθήκη/αφαίρεση γραμμών) */
   function actRowHtml(a) {
     return '<div class="act-row">' +
-      '<label class="slot a-c1"><span class="slot-label">Είδος</span>' +
-        '<input type="text" class="a-type" list="dl-activity" placeholder="π.χ. περπάτημα, γυμναστήριο…" autocomplete="off" value="' + esc(a.type || "") + '"></label>' +
-      '<label class="slot"><span class="slot-label">Ώρα</span>' +
+      '<label class="slot a-c1"><span class="slot-label">' + esc(t("act_type")) + '</span>' +
+        '<input type="text" class="a-type" list="dl-activity" placeholder="' + esc(t("act_type_ph")) + '" autocomplete="off" value="' + esc(a.type || "") + '"></label>' +
+      '<label class="slot"><span class="slot-label">' + esc(t("act_time")) + '</span>' +
         '<input type="time" class="a-time" value="' + esc(a.time || "") + '"></label>' +
-      '<label class="slot"><span class="slot-label">Διάρκεια</span>' +
-        '<input type="text" class="a-duration" list="dl-duration" placeholder="π.χ. 45 λεπτά" autocomplete="off" value="' + esc(a.duration || "") + '"></label>' +
-      '<button type="button" class="a-del" title="Αφαίρεση" aria-label="Αφαίρεση δραστηριότητας">✕</button>' +
+      '<label class="slot"><span class="slot-label">' + esc(t("act_dur")) + '</span>' +
+        '<input type="text" class="a-duration" list="dl-duration" placeholder="' + esc(t("act_dur_ph")) + '" autocomplete="off" value="' + esc(a.duration || "") + '"></label>' +
+      '<button type="button" class="a-del" title="' + esc(t("act_del")) + '" aria-label="' + esc(t("act_del")) + '">✕</button>' +
       '</div>';
   }
   function renderActivities(list) {
@@ -424,7 +591,7 @@
     $("dayPicker").value = currentKey;
     var d = parseKey(currentKey);
     var label = DOW[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
-    $("dayName").textContent = label + (currentKey === todayKey() ? " · Σήμερα" : "");
+    $("dayName").textContent = label + (currentKey === todayKey() ? t("today_suffix") : "");
 
     document.querySelectorAll("#mealCards [data-slot]").forEach(function (inp) {
       inp.value = (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "";
@@ -445,7 +612,7 @@
   function updateProgress(day) {
     var done = mealsDoneCount(day);
     $("progressFill").style.width = (done / MEALS.length * 100) + "%";
-    $("progressLabel").textContent = done + " από " + MEALS.length + " γεύματα συμπληρωμένα";
+    $("progressLabel").textContent = t("progress").replace("{n}", done).replace("{t}", MEALS.length);
     MEALS.forEach(function (m) {
       var card = document.querySelector('.meal-card[data-meal="' + m.id + '"]');
       if (card) card.classList.toggle("done", mealDone(day, m));
@@ -532,14 +699,14 @@
   });
   $("todayBtn").addEventListener("click", function () { goToDay(todayKey()); });
   $("clearDay").addEventListener("click", function () {
-    if (!confirm("Να διαγραφούν όλες οι καταχωρήσεις της ημέρας " + fmtGr(currentKey) + ";")) return;
+    if (!confirm(t("c_clear").replace("{d}", fmtGr(currentKey)))) return;
     var oldDay = db[currentKey];
     delete db[currentKey];
     persist();
     pushDay(profiles.current, currentKey, oldDay);
     renderDay();
     updateFootStats();
-    toast("Η ημέρα καθαρίστηκε");
+    toast(t("day_cleared"));
   });
 
   /* ============================================================
@@ -561,7 +728,7 @@
       " – " + end.getDate() + " " + MONTHS[end.getMonth()].slice(0, 3) + ". " + end.getFullYear();
 
     var tKey = todayKey();
-    var html = "<thead><tr><th style='min-width:120px'>Γεύμα</th>";
+    var html = "<thead><tr><th style='min-width:120px'>" + esc(t("week_meal_col")) + "</th>";
     keys.forEach(function (k) {
       var d = parseKey(k);
       html += "<th" + (k === tKey ? ' class="today-col"' : "") + ">" + DOW_SHORT[d.getDay()] +
@@ -570,7 +737,7 @@
     html += "</tr></thead><tbody>";
 
     MEALS.forEach(function (m) {
-      html += "<tr><th><span class='b'>" + m.emoji + " " + esc(m.name) + "</span></th>";
+      html += "<tr><th><span class='b'>" + m.emoji + " " + esc(mealName(m)) + "</span></th>";
       keys.forEach(function (k) {
         var day = db[k];
         var cell = "";
@@ -592,7 +759,7 @@
     });
 
     // Φυσική δραστηριότητα
-    html += "<tr><th><span class='b'>🏃 Φυσική Δραστ.</span>Είδος/Διάρκεια</th>";
+    html += "<tr><th><span class='b'>" + esc(t("week_act")) + "</span></th>";
     keys.forEach(function (k) {
       var day = db[k];
       var cell = dayActivities(day).map(function (a) {
@@ -605,7 +772,7 @@
     html += "</tr>";
 
     // Ύπνος, κενώσεις & νερό
-    html += "<tr><th><span class='b'>🌙 Ύπνος · 🚽 Κεν. · 💧 Νερό</span></th>";
+    html += "<tr><th><span class='b'>" + esc(t("week_extra")) + "</span></th>";
     keys.forEach(function (k) {
       var day = db[k], parts = [];
       if (day && day.sleep) parts.push("🌙 " + fmtHours(day.sleep) + " ώ.");
@@ -661,7 +828,7 @@
     keys.forEach(function (k) { months[k.slice(0, 7)] = true; });
     var sel = $("historyMonth");
     var cur = sel.value;
-    sel.innerHTML = "<option value=''>Όλοι οι μήνες</option>";
+    sel.innerHTML = "<option value=''>" + esc(t("all_months")) + "</option>";
     Object.keys(months).sort().reverse().forEach(function (mk) {
       var p = mk.split("-");
       var o = document.createElement("option");
@@ -690,24 +857,24 @@
     });
     var streak = calcStreak();
     $("historyStats").innerHTML =
-      stat(total, "καταγεγραμμένες ημέρες") +
-      stat(full, "πλήρεις ημέρες (5/5)") +
-      stat(actDays, "ημέρες με δραστηριότητα") +
-      stat(total ? Math.round(waterSum / total) : 0, "μ.ό. ml νερού / ημέρα") +
-      stat(sleepDays ? fmtHours((sleepSum / sleepDays).toFixed(1)) : "—", "μ.ό. ώρες ύπνου 🌙") +
-      stat(kenDays ? fmtHours((kenSum / kenDays).toFixed(1)) : "—", "μ.ό. κενώσεις / ημέρα 🚽") +
-      stat(streak, "σερί ημερών 🔥");
+      stat(total, t("st_days")) +
+      stat(full, t("st_full")) +
+      stat(actDays, t("st_act")) +
+      stat(total ? Math.round(waterSum / total) : 0, t("st_water")) +
+      stat(sleepDays ? fmtHours((sleepSum / sleepDays).toFixed(1)) : "—", t("st_sleep")) +
+      stat(kenDays ? fmtHours((kenSum / kenDays).toFixed(1)) : "—", t("st_ken")) +
+      stat(streak, t("st_streak"));
 
     var list = $("historyList");
     if (!filtered.length) {
-      list.innerHTML = "<div class='empty'>Δεν υπάρχουν καταγραφές" + (q || month ? " με αυτά τα φίλτρα" : " ακόμη") + ".<br>Ξεκίνα από την καρτέλα «Ημέρα»! 🍽️</div>";
+      list.innerHTML = "<div class='empty'>" + t("hist_empty").replace("{f}", q || month ? t("hist_empty_f") : t("hist_empty_yet")) + "</div>";
       return;
     }
     list.innerHTML = filtered.map(function (k) {
       var d = db[k];
       var date = parseKey(k);
       var pips = MEALS.map(function (m) {
-        return "<span class='hpip" + (mealDone(d, m) ? " on" : "") + "' title='" + esc(m.name) + "'>" + m.emoji + "</span>";
+        return "<span class='hpip" + (mealDone(d, m) ? " on" : "") + "' title='" + esc(mealName(m)) + "'>" + m.emoji + "</span>";
       }).join("");
       var rows = MEALS.map(function (m) {
         var vals = m.slots.map(function (s) {
@@ -718,26 +885,26 @@
             : "<span class='part'><b>" + esc(SLOT_SHORT[s.id]) + ":</b> " + esc(v) + "</span>";
         }).filter(Boolean).join("");
         var tm = ((d.times || {})[m.id] || "").trim();
-        var label = m.emoji + " " + esc(m.name) + (tm ? " <span class='htime'>🕐 " + esc(tm) + "</span>" : "");
+        var label = m.emoji + " " + esc(mealName(m)) + (tm ? " <span class='htime'>🕐 " + esc(tm) + "</span>" : "");
         return (vals || tm) ? "<div class='hrow'><span class='hm'>" + label + "</span><span class='hv'>" + (vals || "—") + "</span></div>" : "";
       }).filter(Boolean).join("");
       var extra = "";
       dayActivities(d).forEach(function (a) {
-        extra += "<div class='hrow'><span class='hm'>🏃 Δραστηριότητα" +
+        extra += "<div class='hrow'><span class='hm'>" + t("h_act") +
           (a.time ? " <span class='htime'>🕐 " + esc(a.time) + "</span>" : "") + "</span><span class='hv'>" +
           esc(a.type || "—") + (a.duration ? " · " + esc(a.duration) : "") + "</span></div>";
       });
-      if (d.sleep) extra += "<div class='hrow'><span class='hm'>🌙 Ύπνος</span><span class='hv'>" + fmtHours(d.sleep) + (d.sleep === 1 ? " ώρα" : " ώρες") + "</span></div>";
-      if (d.kenoseis) extra += "<div class='hrow'><span class='hm'>🚽 Κενώσεις</span><span class='hv'>" + d.kenoseis + (d.kenoseis === 1 ? " φορά" : " φορές") + "</span></div>";
+      if (d.sleep) extra += "<div class='hrow'><span class='hm'>" + t("h_sleep") + "</span><span class='hv'>" + fmtHours(d.sleep) + (d.sleep === 1 ? t("hour1") : t("hourN")) + "</span></div>";
+      if (d.kenoseis) extra += "<div class='hrow'><span class='hm'>" + t("h_ken") + "</span><span class='hv'>" + d.kenoseis + (d.kenoseis === 1 ? t("time1") : t("timeN")) + "</span></div>";
       var wml = getWaterMl(d);
-      if (wml) extra += "<div class='hrow'><span class='hm'>💧 Νερό</span><span class='hv'>" + wml + " ml</span></div>";
-      if ((d.notes || "").trim()) extra += "<div class='hrow'><span class='hm'>📝 Σημειώσεις</span><span class='hv'>" + esc(d.notes) + "</span></div>";
+      if (wml) extra += "<div class='hrow'><span class='hm'>" + t("h_water") + "</span><span class='hv'>" + wml + " ml</span></div>";
+      if ((d.notes || "").trim()) extra += "<div class='hrow'><span class='hm'>" + t("h_notes") + "</span><span class='hv'>" + esc(d.notes) + "</span></div>";
       return "<details class='hday'><summary>" +
         "<span class='hdate'>" + fmtGr(k) + "</span>" +
         "<span class='hdow'>" + DOW[date.getDay()] + "</span>" +
         "<span class='hmeals'>" + pips + "</span></summary>" +
-        "<div class='hbody'>" + (rows + extra || "<p class='hint'>Κενή ημέρα</p>") +
-        "<div class='hactions'><button class='ghost-btn tiny' data-edit='" + k + "'>✏️ Επεξεργασία</button></div>" +
+        "<div class='hbody'>" + (rows + extra || "<p class='hint'>" + t("hist_empty_day") + "</p>") +
+        "<div class='hactions'><button class='ghost-btn tiny' data-edit='" + k + "'>" + t("hist_edit") + "</button></div>" +
         "</div></details>";
     }).join("");
   }
@@ -783,7 +950,7 @@
     return sortedKeys().filter(function (k) { return k >= from && k <= to; });
   }
   function requireData(keys) {
-    if (!keys.length) { toast("Δεν υπάρχουν καταγραφές σε αυτό το εύρος."); return false; }
+    if (!keys.length) { toast(t("no_range")); return false; }
     return true;
   }
 
@@ -791,12 +958,12 @@
   function exportDetailXlsx() {
     var keys = rangeKeys();
     if (!requireData(keys)) return;
-    var head = ["Ημερομηνία", "Ημέρα"];
+    var head = [t("x_date"), t("x_day")];
     MEALS.forEach(function (m) {
-      head.push(m.name + " — Ώρα");
-      m.slots.forEach(function (s) { head.push(m.name + " — " + SLOT_SHORT[s.id]); });
+      head.push(mealName(m) + " — " + t("x_time"));
+      m.slots.forEach(function () { head.push(mealName(m) + " — " + t("x_food")); });
     });
-    head.push("Δραστηριότητα (ώρα)", "Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Ύπνος (ώρες)", "Κενώσεις", "Νερό (ml)", "Σημειώσεις");
+    head.push(t("x_act_time"), t("x_act_type"), t("x_act_dur"), t("x_sleep"), t("x_ken"), t("x_water"), t("x_notes"));
     var rows = [head.map(function (h) { return { v: h, s: "head" }; })];
     keys.forEach(function (k) {
       var d = db[k];
@@ -818,7 +985,7 @@
     for (var i = 2; i < head.length; i++) cols.push(head[i].indexOf("Ώρα") !== -1 ? 12 : 20);
     MiniXLSX.download("Ημερολόγιο_Διατροφής_" + currentUser().name + "_" + keys[0] + "_" + keys[keys.length - 1] + ".xlsx",
       [{ name: "Ημερολόγιο", cols: cols, rows: rows }]);
-    toast("Το Excel κατέβηκε ✓");
+    toast(t("xlsx_ok"));
   }
 
   /* --- Excel: μορφή ημερολογίου — πιστή αναπαραγωγή του εντύπου Word «ΣΥΝΔΥΑΣΜΟΙ ΤΡΟΦΩΝ» --- */
@@ -842,7 +1009,7 @@
         rows.push(r1); heights.push(24);
         var r2 = [{ v: "", s: "title" }, { v: "", s: "title" }];
         keys.forEach(function (k, i) {
-          r2.push({ v: grUpper(DOW[parseKey(k).getDay()]), s: i === 6 ? "dowSun" : "dow" });
+          r2.push({ v: grUpper(LOCALE.el.dow[parseKey(k).getDay()]), s: i === 6 ? "dowSun" : "dow" });
         });
         rows.push(r2); heights.push(22);
 
@@ -912,9 +1079,9 @@
       }
       start = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
     }
-    if (!sheets.length) { toast("Δεν υπάρχουν καταγραφές σε αυτό το εύρος."); return; }
+    if (!sheets.length) { toast(t("no_range")); return; }
     MiniXLSX.download("Ημερολόγιο_" + currentUser().name + "_" + (labelWord || "ημερολόγιο") + "_" + from + "_" + to + ".xlsx", sheets);
-    toast("Το Excel κατέβηκε ✓");
+    toast(t("xlsx_ok"));
   }
 
   /* --- CSV --- */
@@ -922,12 +1089,12 @@
     var keys = rangeKeys();
     if (!requireData(keys)) return;
     function q(s) { return '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"'; }
-    var head = ["Ημερομηνία", "Ημέρα"];
+    var head = [t("x_date"), t("x_day")];
     MEALS.forEach(function (m) {
-      head.push(m.name + " - Ώρα");
-      m.slots.forEach(function (s) { head.push(m.name + " - " + SLOT_SHORT[s.id]); });
+      head.push(mealName(m) + " - " + t("x_time"));
+      m.slots.forEach(function () { head.push(mealName(m) + " - " + t("x_food")); });
     });
-    head.push("Δραστηριότητα (ώρα)", "Δραστηριότητα (είδος)", "Δραστηριότητα (διάρκεια)", "Ύπνος (ώρες)", "Κενώσεις", "Νερό (ml)", "Σημειώσεις");
+    head.push(t("x_act_time"), t("x_act_type"), t("x_act_dur"), t("x_sleep"), t("x_ken"), t("x_water"), t("x_notes"));
     var lines = [head.map(q).join(";")];
     keys.forEach(function (k) {
       var d = db[k];
@@ -953,7 +1120,7 @@
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
-    toast("Το CSV κατέβηκε ✓");
+    toast(t("csv_ok"));
   }
 
   /* --- JSON backup / restore --- */
@@ -966,7 +1133,7 @@
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
-    toast("Το αντίγραφο κατέβηκε ✓");
+    toast(t("backup_ok"));
   }
   $("impJsonBtn").addEventListener("click", function () { $("impJson").click(); });
   $("impJson").addEventListener("change", function () {
@@ -989,11 +1156,11 @@
         persist();
         renderDay();
         updateFootStats();
-        $("importMsg").textContent = "Εισήχθησαν " + count + " ημέρες ✓";
-        toast("Η εισαγωγή ολοκληρώθηκε ✓");
+        $("importMsg").textContent = t("import_n").replace("{n}", count);
+        toast(t("import_ok"));
       } catch (e) {
-        $("importMsg").textContent = "Μη έγκυρο αρχείο αντιγράφου.";
-        toast("Μη έγκυρο αρχείο");
+        $("importMsg").textContent = t("import_bad");
+        toast(t("import_bad_t"));
       }
       $("impJson").value = "";
     };
@@ -1018,15 +1185,15 @@
   $("expPrint").addEventListener("click", printHistory);
 
   $("wipeAll").addEventListener("click", function () {
-    if (!confirm("ΠΡΟΣΟΧΗ: Θα διαγραφούν ΟΛΕΣ οι καταγραφές του χρήστη «" + currentUser().name + "» οριστικά. Συνέχεια;")) return;
-    if (!confirm("Σίγουρα; Δεν υπάρχει επαναφορά (εκτός αν έχεις αντίγραφο .json).")) return;
+    if (!confirm(t("c_wipe1").replace("{n}", currentUser().name))) return;
+    if (!confirm(t("c_wipe2"))) return;
     db = {};
     persist();
     wipeRemoteDays(profiles.current);
     renderDay();
     renderHistory();
     updateFootStats();
-    toast("Όλα τα δεδομένα διαγράφηκαν");
+    toast(t("all_deleted"));
   });
 
   /* ============================================================
@@ -1045,9 +1212,9 @@
       var days = userDayCount(u.id);
       return "<div class='user-row" + (u.id === profiles.current ? " current" : "") + "' data-user='" + esc(u.id) + "'>" +
         "<span class='user-avatar' style='background:" + avatarColor(u.id) + "'>" + esc((u.name || "?").trim().charAt(0).toUpperCase()) + "</span>" +
-        "<span class='u-name'>" + esc(u.name) + (u.id === profiles.current ? " <small>· ενεργός</small>" : "") + "</span>" +
-        "<span class='u-days'>" + days + (days === 1 ? " ημέρα" : " ημέρες") + "</span>" +
-        (profiles.users.length > 1 ? "<button type='button' class='u-del' data-del='" + esc(u.id) + "' title='Διαγραφή χρήστη' aria-label='Διαγραφή χρήστη " + esc(u.name) + "'>🗑</button>" : "") +
+        "<span class='u-name'>" + esc(u.name) + (u.id === profiles.current ? " <small>" + t("u_active") + "</small>" : "") + "</span>" +
+        "<span class='u-days'>" + days + (days === 1 ? t("u_day1") : t("u_dayN")) + "</span>" +
+        (profiles.users.length > 1 ? "<button type='button' class='u-del' data-del='" + esc(u.id) + "' title='" + esc(t("del_user_title")) + "' aria-label='" + esc(t("del_user_title")) + " " + esc(u.name) + "'>🗑</button>" : "") +
         "</div>";
     }).join("");
   }
@@ -1055,7 +1222,7 @@
   function openUserModal(locked) {
     lockedPick = !!locked;
     $("userClose").hidden = lockedPick;
-    $("userModalTitle").textContent = lockedPick ? "👤 Ποιος καταγράφει;" : "👤 Χρήστες";
+    $("userModalTitle").textContent = lockedPick ? t("who") : t("users_title");
     renderUserList();
     $("newUserName").value = "";
     $("userOverlay").hidden = false;
@@ -1083,7 +1250,7 @@
     refreshAllViews();
     attachSync();
     closeUserModal();
-    toast("Χρήστης: " + currentUser().name + " 👤");
+    toast(t("user_toast") + currentUser().name + " 👤");
   }
 
   $("userBtn").addEventListener("click", function () { openUserModal(false); });
@@ -1104,8 +1271,8 @@
       if (!u) return;
       var days = userDayCount(uid);
       // Διπλή επιβεβαίωση· τα δεδομένα ΔΕΝ διαγράφονται — μένουν στη βάση για επαναφορά
-      if (!confirm("Να διαγραφεί ο λογαριασμός «" + u.name + "»" + (days ? " (" + days + " καταγεγραμμένες ημέρες)" : "") + ";")) return;
-      if (!confirm("Σίγουρα; Ο λογαριασμός «" + u.name + "» θα φύγει από τη λίστα σε όλες τις συσκευές.\n\nΟι καταγραφές του ΔΕΝ διαγράφονται — μένουν αποθηκευμένες στη βάση και μπορούν να επανέλθουν.")) return;
+      if (!confirm(t("c_del1").replace("{n}", u.name).replace("{d}", days ? t("c_del1_days").replace("{n}", days) : ""))) return;
+      if (!confirm(t("c_del2").replace("{n}", u.name))) return;
       profiles.users = profiles.users.filter(function (x) { return x.id !== uid; });
       if (profiles.current === uid) {
         profiles.current = profiles.users[0].id;
@@ -1117,7 +1284,7 @@
       persistProfiles();
       pushProfiles();
       renderUserList();
-      toast("Ο λογαριασμός αφαιρέθηκε — τα δεδομένα του φυλάχθηκαν 🗄️");
+      toast(t("user_removed"));
       return;
     }
     var row = e.target.closest("[data-user]");
@@ -1129,13 +1296,13 @@
     var name = $("newUserName").value.trim();
     if (!name) { $("newUserName").focus(); return; }
     var exists = profiles.users.some(function (u) { return u.name.toLowerCase() === name.toLowerCase(); });
-    if (exists) { toast("Υπάρχει ήδη χρήστης με αυτό το όνομα"); return; }
+    if (exists) { toast(t("user_exists")); return; }
     var id = "u" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
     profiles.users.push({ id: id, name: name });
     profiles.up = Date.now();
     persistProfiles();
     pushProfiles();
-    toast("Δημιουργήθηκε ο χρήστης «" + name + "» ✓");
+    toast(t("user_created").replace("{n}", name));
     switchUser(id);
   });
 
@@ -1178,17 +1345,17 @@
     var el = $("syncInfo");
     if (!el) return;
     if (familyCode === "__off__") {
-      el.textContent = "Απενεργοποιημένος — τα δεδομένα μένουν μόνο σε αυτή τη συσκευή.";
+      el.textContent = t("sc_off");
     } else if (familyCode) {
-      el.textContent = "Κωδικός οικογένειας: «" + familyCode + "». " + ($("syncStatus").textContent || "Τα δεδομένα συγχρονίζονται μέσω cloud (Firebase).");
+      el.textContent = t("sc_code").replace("{c}", familyCode) + ($("syncStatus").textContent || t("sc_tail"));
     } else {
-      el.textContent = "Δεν έχει οριστεί κωδικός οικογένειας.";
+      el.textContent = t("sc_none");
     }
   }
 
   function initFirebase() {
-    if (!familyCode || familyCode === "__off__") { setSyncStatus(familyCode === "__off__" ? "Χωρίς online συγχρονισμό" : ""); return; }
-    if (!window.firebase || !firebase.firestore) { setSyncStatus("Ο συγχρονισμός δεν φόρτωσε (χωρίς σύνδεση;)"); return; }
+    if (!familyCode || familyCode === "__off__") { setSyncStatus(familyCode === "__off__" ? t("sync_none") : ""); return; }
+    if (!window.firebase || !firebase.firestore) { setSyncStatus(t("sync_noload")); return; }
     try {
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       fdb = firebase.firestore();
@@ -1213,7 +1380,7 @@
     if (daysUnsub) { daysUnsub(); daysUnsub = null; }
     if (profUnsub) { profUnsub(); profUnsub = null; }
     var uid = profiles.current;
-    setSyncStatus("☁️ Συγχρονισμός…");
+    setSyncStatus(t("sync_run"));
 
     var firstSnap = true;
     daysUnsub = daysCol(uid).onSnapshot(function (snap) {
@@ -1244,9 +1411,9 @@
       }
       if (changed) { persist(); remoteRefresh(); }
       if (wasFirst) maybeCloudSnapshot(uid); // ημερήσιο αντίγραφο ασφαλείας
-      setSyncStatus("☁️ Συγχρονισμός ενεργός ✓");
+      setSyncStatus(t("sync_on"));
     }, function (err) {
-      setSyncStatus("☁️ Σφάλμα συγχρονισμού — τα δεδομένα μένουν τοπικά");
+      setSyncStatus(t("sync_err"));
     });
 
     profUnsub = famDoc().collection("meta").doc("profiles").onSnapshot(function (doc) {
@@ -1371,11 +1538,12 @@
   function updateFootStats() {
     var keys = sortedKeys();
     $("footStats").textContent = keys.length
-      ? keys.length + " καταγεγραμμένες ημέρες · πρώτη: " + fmtGr(keys[0])
-      : "Καμία καταγραφή ακόμη";
+      ? t("foot_days").replace("{n}", keys.length).replace("{d}", fmtGr(keys[0]))
+      : t("foot_none");
   }
 
   /* ---------- Εκκίνηση ---------- */
+  applyLang();
   renderUserButton();
   renderDay();
   updateFootStats();
