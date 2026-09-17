@@ -54,6 +54,7 @@
     </div>
 
     <div class="dayprogress">
+      <div class="plate-wrap" id="plateWrap"><div id="plate3d" class="plate3d"></div></div>
       <div class="bar"><span id="progressFill"></span></div>
       <div class="bar-label" id="progressLabel">0 από 5 γεύματα συμπληρωμένα</div>
       <div class="saved" id="savedFlag" hidden data-i18n="saved">Αποθηκεύτηκε ✓</div>
@@ -278,6 +279,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="xlsx.js?v=10"></script>
 <script src="app.js?v=10"></script>
+<script type="module" src="plate3d.js?v=10"></script>
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function () {});
