@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ημερολόγιο">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
 
@@ -25,16 +25,17 @@
     </span>
   </div>
   <nav class="tabs" id="tabs" aria-label="Πλοήγηση">
-    <button class="tab is-active" data-view="day">Ημέρα</button>
-    <button class="tab" data-view="week">Εβδομάδα</button>
-    <button class="tab" data-view="history">Ιστορικό</button>
-    <button class="tab" data-view="guide">Οδηγός</button>
-    <button class="tab" data-view="export">Εξαγωγή</button>
+    <button class="tab is-active" data-view="day" data-i18n="tab_day">Ημέρα</button>
+    <button class="tab" data-view="week" data-i18n="tab_week">Εβδομάδα</button>
+    <button class="tab" data-view="history" data-i18n="tab_history">Ιστορικό</button>
+    <button class="tab" data-view="guide" data-i18n="tab_guide">Οδηγός</button>
+    <button class="tab" data-view="export" data-i18n="tab_export">Εξαγωγή</button>
   </nav>
   <button class="user-btn" id="userBtn" title="Αλλαγή χρήστη" aria-label="Αλλαγή χρήστη">
     <span class="user-avatar" id="userAvatar"></span>
     <span class="user-name" id="userName">—</span>
   </button>
+  <button class="icon-btn lang-btn" id="langBtn" title="Language / Γλώσσα" aria-label="Language / Γλώσσα">EN</button>
   <button class="icon-btn" id="themeBtn" title="Εναλλαγή θέματος" aria-label="Εναλλαγή θέματος">◐</button>
 </header>
 
@@ -49,76 +50,76 @@
         <div class="dayname" id="dayName">—</div>
       </div>
       <button class="nav-btn" id="nextDay" aria-label="Επόμενη ημέρα">›</button>
-      <button class="ghost-btn" id="todayBtn">Σήμερα</button>
+      <button class="ghost-btn" id="todayBtn" data-i18n="today_btn">Σήμερα</button>
     </div>
 
     <div class="dayprogress">
       <div class="bar"><span id="progressFill"></span></div>
       <div class="bar-label" id="progressLabel">0 από 5 γεύματα συμπληρωμένα</div>
-      <div class="saved" id="savedFlag" hidden>Αποθηκεύτηκε ✓</div>
+      <div class="saved" id="savedFlag" hidden data-i18n="saved">Αποθηκεύτηκε ✓</div>
     </div>
 
     <div id="mealCards" class="cards"></div>
 
     <div class="card">
       <div class="card-head">
-        <h2>Φυσική Δραστηριότητα</h2>
+        <h2 data-i18n="act_title">Φυσική Δραστηριότητα</h2>
       </div>
       <div id="actList" class="acts"></div>
-      <button class="ghost-btn tiny" id="actAdd" type="button">➕ Προσθήκη δραστηριότητας</button>
+      <button class="ghost-btn tiny" id="actAdd" type="button" data-i18n="act_add">➕ Προσθήκη δραστηριότητας</button>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <h2>Ύπνος &amp; Κενώσεις</h2>
+        <h2 data-i18n="sk_title">Ύπνος &amp; Κενώσεις</h2>
       </div>
       <div class="water">
-        <span class="slot-label">Ώρες ύπνου</span>
+        <span class="slot-label" data-i18n="sk_sleep">Ώρες ύπνου</span>
         <div class="water-ctl">
           <input type="number" id="sleepHours" min="0" max="24" step="0.5" inputmode="decimal" placeholder="0">
-          <span class="water-unit">ώρες</span>
+          <span class="water-unit" data-i18n="sk_hours">ώρες</span>
           <button class="ghost-btn tiny" type="button" data-sleeph="6">6</button>
           <button class="ghost-btn tiny" type="button" data-sleeph="7">7</button>
           <button class="ghost-btn tiny" type="button" data-sleeph="8">8</button>
           <button class="ghost-btn tiny" type="button" data-sleeph="9">9</button>
-          <button class="ghost-btn tiny" id="sleepReset" type="button">Μηδενισμός</button>
+          <button class="ghost-btn tiny" id="sleepReset" type="button" data-i18n="reset">Μηδενισμός</button>
         </div>
       </div>
       <div class="water">
-        <span class="slot-label">Κενώσεις</span>
+        <span class="slot-label" data-i18n="sk_ken">Κενώσεις</span>
         <div class="water-ctl">
           <input type="number" id="kenCount" min="0" max="20" step="1" inputmode="numeric" placeholder="0">
-          <span class="water-unit">φορές</span>
+          <span class="water-unit" data-i18n="sk_times">φορές</span>
           <button class="ghost-btn tiny" type="button" data-ken="1">1</button>
           <button class="ghost-btn tiny" type="button" data-ken="2">2</button>
           <button class="ghost-btn tiny" type="button" data-ken="3">3</button>
-          <button class="ghost-btn tiny" id="kenReset" type="button">Μηδενισμός</button>
+          <button class="ghost-btn tiny" id="kenReset" type="button" data-i18n="reset">Μηδενισμός</button>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <h2>Νερό &amp; Σημειώσεις</h2>
+        <h2 data-i18n="wn_title">Νερό &amp; Σημειώσεις</h2>
       </div>
       <div class="water">
-        <span class="slot-label">Νερό</span>
+        <span class="slot-label" data-i18n="wn_water">Νερό</span>
         <div class="water-ctl">
           <input type="number" id="waterMl" min="0" max="10000" step="50" inputmode="numeric" placeholder="0">
           <span class="water-unit">ml</span>
           <button class="ghost-btn tiny" type="button" data-addml="250">+250</button>
           <button class="ghost-btn tiny" type="button" data-addml="500">+500</button>
-          <button class="ghost-btn tiny" id="waterReset" type="button">Μηδενισμός</button>
+          <button class="ghost-btn tiny" id="waterReset" type="button" data-i18n="reset">Μηδενισμός</button>
         </div>
       </div>
       <label class="slot">
-        <span class="slot-label">Σημειώσεις ημέρας</span>
-        <textarea id="dayNotes" rows="3" placeholder="Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…"></textarea>
+        <span class="slot-label" data-i18n="notes_label">Σημειώσεις ημέρας</span>
+        <textarea id="dayNotes" rows="3" data-i18n-ph="notes_ph" placeholder="Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…"></textarea>
       </label>
     </div>
 
     <div class="day-actions">
-      <button class="danger-btn" id="clearDay">Καθαρισμός ημέρας</button>
+      <button class="danger-btn" id="clearDay" data-i18n="clear_day">Καθαρισμός ημέρας</button>
     </div>
   </section>
 
@@ -130,22 +131,22 @@
         <div class="dayname" id="weekLabel">—</div>
       </div>
       <button class="nav-btn" id="nextWeek" aria-label="Επόμενη εβδομάδα">›</button>
-      <button class="ghost-btn" id="thisWeekBtn">Τρέχουσα</button>
+      <button class="ghost-btn" id="thisWeekBtn" data-i18n="week_this">Τρέχουσα</button>
     </div>
-    <p class="hint">Πάτησε σε οποιοδήποτε κελί για να επεξεργαστείς εκείνη την ημέρα.</p>
+    <p class="hint" data-i18n="week_hint">Πάτησε σε οποιοδήποτε κελί για να επεξεργαστείς εκείνη την ημέρα.</p>
     <div class="table-wrap">
       <table class="weekgrid" id="weekGrid"></table>
     </div>
     <div class="week-export">
-      <button class="primary-btn" id="weekXlsx">Εξαγωγή εβδομάδας σε Excel</button>
+      <button class="primary-btn" id="weekXlsx" data-i18n="week_export">Εξαγωγή εβδομάδας σε Excel</button>
     </div>
   </section>
 
   <!-- ============ ΙΣΤΟΡΙΚΟ ============ -->
   <section class="view" id="view-history">
     <div class="history-tools">
-      <input type="search" id="historySearch" placeholder="Αναζήτηση τροφής, δραστηριότητας, σημείωσης…">
-      <select id="historyMonth"><option value="">Όλοι οι μήνες</option></select>
+      <input type="search" id="historySearch" data-i18n-ph="hist_search_ph" placeholder="Αναζήτηση τροφής, δραστηριότητας, σημείωσης…">
+      <select id="historyMonth"><option value="" data-i18n="all_months">Όλοι οι μήνες</option></select>
     </div>
     <div id="historyStats" class="stats"></div>
     <div id="historyList" class="history"></div>
@@ -186,46 +187,46 @@
   <!-- ============ ΕΞΑΓΩΓΗ ============ -->
   <section class="view" id="view-export">
     <div class="card">
-      <div class="card-head"><h2>Εξαγωγή σε Excel</h2></div>
-      <p class="hint">Διάλεξε εύρος ημερομηνιών και κατέβασε αρχείο <code>.xlsx</code> που ανοίγει απευθείας στο Excel.</p>
+      <div class="card-head"><h2 data-i18n="exp_title">Εξαγωγή σε Excel</h2></div>
+      <p class="hint" data-i18n="exp_hint">Διάλεξε εύρος ημερομηνιών και κατέβασε αρχείο .xlsx που ανοίγει απευθείας στο Excel.</p>
       <div class="range">
-        <label class="slot"><span class="slot-label">Από</span><input type="date" id="expFrom"></label>
-        <label class="slot"><span class="slot-label">Έως</span><input type="date" id="expTo"></label>
-        <button class="ghost-btn tiny" id="rangeAll">Όλα</button>
-        <button class="ghost-btn tiny" id="rangeMonth">Τρέχων μήνας</button>
+        <label class="slot"><span class="slot-label" data-i18n="exp_from">Από</span><input type="date" id="expFrom"></label>
+        <label class="slot"><span class="slot-label" data-i18n="exp_to">Έως</span><input type="date" id="expTo"></label>
+        <button class="ghost-btn tiny" id="rangeAll" data-i18n="range_all">Όλα</button>
+        <button class="ghost-btn tiny" id="rangeMonth" data-i18n="range_month">Τρέχων μήνας</button>
       </div>
       <div class="export-actions">
-        <button class="primary-btn" id="expXlsx">📊 Excel — αναλυτικός πίνακας</button>
-        <button class="primary-btn" id="expXlsxWeeks">📅 Excel — μορφή ημερολογίου</button>
-        <button class="ghost-btn" id="expCsv">CSV (.csv)</button>
-        <button class="ghost-btn" id="expPrint">Εκτύπωση / PDF</button>
+        <button class="primary-btn" id="expXlsx" data-i18n="btn_detail">📊 Excel — αναλυτικός πίνακας</button>
+        <button class="primary-btn" id="expXlsxWeeks" data-i18n="btn_cal">📅 Excel — μορφή ημερολογίου</button>
+        <button class="ghost-btn" id="expCsv" data-i18n="btn_csv">CSV (.csv)</button>
+        <button class="ghost-btn" id="expPrint" data-i18n="btn_print">Εκτύπωση / PDF</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>Αντίγραφο ασφαλείας</h2></div>
-      <p class="hint">Με ενεργό συγχρονισμό τα δεδομένα αποθηκεύονται και online. Το αντίγραφο .json παραμένει χρήσιμο ως εφεδρεία.</p>
+      <div class="card-head"><h2 data-i18n="backup_title">Αντίγραφο ασφαλείας</h2></div>
+      <p class="hint" data-i18n="backup_hint">Με ενεργό συγχρονισμό τα δεδομένα αποθηκεύονται και online. Το αντίγραφο .json παραμένει χρήσιμο ως εφεδρεία.</p>
       <div class="export-actions">
-        <button class="ghost-btn" id="expJson">⬇ Λήψη αντιγράφου (.json)</button>
-        <button class="ghost-btn" id="impJsonBtn">⬆ Εισαγωγή αντιγράφου</button>
+        <button class="ghost-btn" id="expJson" data-i18n="backup_dl">⬇ Λήψη αντιγράφου (.json)</button>
+        <button class="ghost-btn" id="impJsonBtn" data-i18n="backup_up">⬆ Εισαγωγή αντιγράφου</button>
         <input type="file" id="impJson" accept="application/json,.json" hidden>
       </div>
       <div id="importMsg" class="hint"></div>
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>☁️ Online συγχρονισμός</h2></div>
+      <div class="card-head"><h2 data-i18n="sync_title">☁️ Online συγχρονισμός</h2></div>
       <p class="hint" id="syncInfo">—</p>
       <div class="export-actions">
-        <button class="ghost-btn" id="syncChange">Ορισμός / αλλαγή κωδικού οικογένειας</button>
-        <button class="ghost-btn" id="syncOff">Απενεργοποίηση συγχρονισμού</button>
+        <button class="ghost-btn" id="syncChange" data-i18n="sync_change">Ορισμός / αλλαγή κωδικού οικογένειας</button>
+        <button class="ghost-btn" id="syncOff" data-i18n="sync_off_btn">Απενεργοποίηση συγχρονισμού</button>
       </div>
     </div>
 
     <div class="card danger-card">
-      <div class="card-head"><h2>Διαγραφή όλων</h2></div>
-      <p class="hint">Σβήνει οριστικά όλες τις καταγραφές από αυτόν τον browser.</p>
-      <button class="danger-btn" id="wipeAll">Διαγραφή όλων των δεδομένων</button>
+      <div class="card-head"><h2 data-i18n="wipe_title">Διαγραφή όλων</h2></div>
+      <p class="hint" data-i18n="wipe_hint">Σβήνει οριστικά όλες τις καταγραφές από αυτόν τον browser.</p>
+      <button class="danger-btn" id="wipeAll" data-i18n="wipe_btn">Διαγραφή όλων των δεδομένων</button>
     </div>
   </section>
 
@@ -264,10 +265,10 @@
     </div>
     <div id="userList" class="user-list"></div>
     <form id="newUserForm" class="new-user">
-      <input type="text" id="newUserName" placeholder="Όνομα νέου χρήστη…" maxlength="24" autocomplete="off">
-      <button class="primary-btn" type="submit">➕ Δημιουργία</button>
+      <input type="text" id="newUserName" data-i18n-ph="new_user_ph" placeholder="Όνομα νέου χρήστη…" maxlength="24" autocomplete="off">
+      <button class="primary-btn" type="submit" data-i18n="create_btn">➕ Δημιουργία</button>
     </form>
-    <p class="hint">Κάθε χρήστης έχει το δικό του ημερολόγιο σε αυτή τη συσκευή. Λογαριασμοί με online σύνδεση θα προστεθούν σε επόμενη έκδοση.</p>
+    <p class="hint" data-i18n="user_hint">Κάθε χρήστης έχει το δικό του ημερολόγιο σε αυτή τη συσκευή.</p>
   </div>
 </div>
 
@@ -275,8 +276,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="xlsx.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="xlsx.js?v=10"></script>
+<script src="app.js?v=10"></script>
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function () {});
