@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ημερολόγιο">
-<link rel="stylesheet" href="styles.css?v=10">
+<link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
 
@@ -54,13 +54,14 @@
     </div>
 
     <div class="dayprogress">
-      <div class="plate-wrap" id="plateWrap"><div id="plate3d" class="plate3d"></div></div>
       <div class="bar"><span id="progressFill"></span></div>
       <div class="bar-label" id="progressLabel">0 από 5 γεύματα συμπληρωμένα</div>
       <div class="saved" id="savedFlag" hidden data-i18n="saved">Αποθηκεύτηκε ✓</div>
     </div>
 
     <div id="mealCards" class="cards"></div>
+    <div id="extraCards" class="cards extra-cards"></div>
+    <div class="extra-addbar"><button class="ghost-btn tiny" id="extraAdd" type="button" data-i18n="extra_add">➕ Ενδιάμεσο γεύμα</button></div>
 
     <div class="card">
       <div class="card-head">
@@ -277,9 +278,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="xlsx.js?v=10"></script>
-<script src="app.js?v=10"></script>
-<script type="module" src="plate3d.js?v=11"></script>
+<script src="xlsx.js?v=12"></script>
+<script src="app.js?v=12"></script>
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function () {});
