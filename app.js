@@ -33,6 +33,7 @@
       act_add: "➕ Προσθήκη δραστηριότητας", act_del: "Αφαίρεση δραστηριότητας",
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα (π.χ. Ενδιάμεσο, Σνακ…)",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
+      mv_up: "Μετακίνηση πάνω", mv_down: "Μετακίνηση κάτω",
       sk_title: "Ύπνος & Κενώσεις", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
       wn_title: "Νερό & Σημειώσεις", wn_water: "Νερό", notes_label: "Σημειώσεις ημέρας", notes_ph: "Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…",
       clear_day: "Καθαρισμός ημέρας",
@@ -91,6 +92,7 @@
       act_add: "➕ Add activity", act_del: "Remove activity",
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Name (e.g. Snack, Late lunch…)",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
+      mv_up: "Move up", mv_down: "Move down",
       sk_title: "Sleep & Bowel Movements", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
       wn_title: "Water & Notes", wn_water: "Water", notes_label: "Day notes", notes_ph: "How you felt, hunger, sleep, anything else…",
       clear_day: "Clear day",
@@ -350,6 +352,21 @@
     return (d && d.extras && d.extras.length) ? d.extras : [];
   }
   function extraName(x) { return (x.name || "").trim() || t("extra_default"); }
+  // Σειρά καρτών της ημέρας: ids βασικών γευμάτων + "x0","x1"… για τα ενδιάμεσα.
+  // Αν λείπει (παλιές ημέρες) → προεπιλεγμένη σειρά και τα ενδιάμεσα στο τέλος.
+  function defaultOrder(d) {
+    var o = MEALS.map(function (m) { return m.id; });
+    dayExtras(d).forEach(function (_, i) { o.push("x" + i); });
+    return o;
+  }
+  function dayOrder(d) {
+    var def = defaultOrder(d), seen = {}, out = [];
+    ((d && d.order) || []).forEach(function (tok) {
+      if (def.indexOf(tok) !== -1 && !seen[tok]) { seen[tok] = true; out.push(tok); }
+    });
+    def.forEach(function (tok) { if (!seen[tok]) out.push(tok); });
+    return out;
+  }
   function blankDay() {
     var d = { meals: {}, times: {}, activities: [], activity: { type: "", time: "", duration: "" }, extras: [], waterMl: 0, sleep: 0, kenoseis: 0, notes: "" };
     MEALS.forEach(function (m) {
@@ -484,6 +501,12 @@
   /* ============================================================
      ΠΡΟΒΟΛΗ: ΗΜΕΡΑ
      ============================================================ */
+  function moveBtnsHtml() {
+    return '<span class="move-btns">' +
+      '<button type="button" class="mv" data-mv="-1" title="' + esc(t("mv_up")) + '" aria-label="' + esc(t("mv_up")) + '">▲</button>' +
+      '<button type="button" class="mv" data-mv="1" title="' + esc(t("mv_down")) + '" aria-label="' + esc(t("mv_down")) + '">▼</button>' +
+      '</span>';
+  }
   function buildMealCards() {
     var wrap = $("mealCards");
     wrap.innerHTML = "";
@@ -499,6 +522,7 @@
         '<div class="card-head">' +
           '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(mealName(m)) + '</h2></div>' +
           '<div class="meal-head-right">' +
+            moveBtnsHtml() +
             '<input type="time" class="meal-time" data-meal="' + m.id + '" title="' + esc(t("meal_time")) + '" aria-label="' + esc(t("meal_time")) + ' — ' + esc(mealName(m)) + '">' +
             '<span class="check">✓</span>' +
           '</div>' +
@@ -518,6 +542,7 @@
           '<input type="text" class="x-name" placeholder="' + esc(t("extra_name_ph")) + '" autocomplete="off" value="' + esc(x.name || "") + '" aria-label="' + esc(t("extra_name_ph")) + '">' +
         '</div>' +
         '<div class="meal-head-right">' +
+          moveBtnsHtml() +
           '<input type="time" class="meal-time x-time" value="' + esc(x.time || "") + '" title="' + esc(t("meal_time")) + '" aria-label="' + esc(t("meal_time")) + '">' +
           '<button type="button" class="x-del" title="' + esc(t("extra_del")) + '" aria-label="' + esc(t("extra_del")) + '">✕</button>' +
         '</div>' +
@@ -527,12 +552,52 @@
       '<div class="combo-hint x-combo"></div>' +
       '</div>';
   }
-  function renderExtras(list) {
-    $("extraCards").innerHTML = (list || []).map(extraCardHtml).join("");
+  function cardFromHtml(html) {
+    var tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.firstChild;
   }
+  /* Τοποθέτηση όλων των καρτών (βασικά + ενδιάμεσα) στη σειρά της ημέρας */
+  function layoutCards(day) {
+    var wrap = $("mealCards");
+    wrap.querySelectorAll(".extra-card").forEach(function (c) { c.remove(); });
+    var extras = dayExtras(day);
+    dayOrder(day).forEach(function (tok) {
+      var el = /^x\d+$/.test(tok)
+        ? cardFromHtml(extraCardHtml(extras[+tok.slice(1)]))
+        : wrap.querySelector('.meal-card[data-meal="' + tok + '"]');
+      if (el) wrap.appendChild(el); // appendChild μετακινεί τον υπάρχοντα κόμβο, δεν τον ξαναφτιάχνει
+    });
+    updateMoveButtons();
+  }
+  function allCards() { return Array.prototype.slice.call(document.querySelectorAll("#mealCards .meal-card")); }
+  function readOrder() {
+    var xi = 0;
+    return allCards().map(function (c) { return c.dataset.meal || ("x" + (xi++)); });
+  }
+  function updateMoveButtons() {
+    var cards = allCards();
+    cards.forEach(function (c, i) {
+      c.querySelector('.mv[data-mv="-1"]').disabled = i === 0;
+      c.querySelector('.mv[data-mv="1"]').disabled = i === cards.length - 1;
+    });
+  }
+  $("mealCards").addEventListener("click", function (e) {
+    var b = e.target.closest(".mv");
+    if (!b || b.disabled) return;
+    var card = b.closest(".meal-card");
+    var sib = +b.dataset.mv < 0 ? card.previousElementSibling : card.nextElementSibling;
+    if (!sib) return;
+    if (+b.dataset.mv < 0) card.parentNode.insertBefore(card, sib);
+    else card.parentNode.insertBefore(sib, card);
+    updateMoveButtons();
+    card.classList.remove("moved"); void card.offsetWidth; card.classList.add("moved");
+    if (card.scrollIntoView) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    scheduleSave();
+  });
   function readExtras() {
     var out = [];
-    document.querySelectorAll("#extraCards .extra-card").forEach(function (card) {
+    document.querySelectorAll("#mealCards .extra-card").forEach(function (card) {
       var x = {
         name: card.querySelector(".x-name").value.trim(),
         time: card.querySelector(".x-time").value,
@@ -543,16 +608,17 @@
     return out;
   }
   $("extraAdd").addEventListener("click", function () {
-    $("extraCards").insertAdjacentHTML("beforeend", extraCardHtml({ name: "", time: "", text: "" }));
-    var cards = document.querySelectorAll("#extraCards .extra-card");
-    cards[cards.length - 1].querySelector(".x-text").focus();
+    var card = cardFromHtml(extraCardHtml({ name: "", time: "", text: "" }));
+    $("mealCards").appendChild(card);
+    updateMoveButtons();
+    card.querySelector(".x-text").focus();
+    if (card.scrollIntoView) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
-  $("extraCards").addEventListener("input", scheduleSave);
-  $("extraCards").addEventListener("change", scheduleSave);
-  $("extraCards").addEventListener("click", function (e) {
+  $("mealCards").addEventListener("click", function (e) {
     var b = e.target.closest(".x-del");
     if (!b) return;
     b.closest(".extra-card").remove();
+    updateMoveButtons();
     scheduleSave();
   });
 
@@ -651,11 +717,11 @@
     document.querySelectorAll("#mealCards [data-slot]").forEach(function (inp) {
       inp.value = (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "";
     });
-    document.querySelectorAll("#mealCards .meal-time").forEach(function (inp) {
+    document.querySelectorAll("#mealCards .meal-time[data-meal]").forEach(function (inp) {
       inp.value = (day.times || {})[inp.dataset.meal] || "";
     });
+    layoutCards(day);
     renderActivities(dayActivities(day));
-    renderExtras(dayExtras(day));
     $("dayNotes").value = day.notes || "";
     var ml = getWaterMl(day);
     $("waterMl").value = ml > 0 ? ml : "";
@@ -687,11 +753,14 @@
       if (!day.meals[inp.dataset.meal]) day.meals[inp.dataset.meal] = {};
       day.meals[inp.dataset.meal][inp.dataset.slot] = inp.value.trim();
     });
-    document.querySelectorAll("#mealCards .meal-time").forEach(function (inp) {
+    document.querySelectorAll("#mealCards .meal-time[data-meal]").forEach(function (inp) {
       day.times[inp.dataset.meal] = inp.value;
     });
     day.activities = readActivities();
     day.extras = readExtras();
+    var order = readOrder();
+    if (order.join(",") === defaultOrder(day).join(",")) delete day.order; // προεπιλεγμένη σειρά → δεν αποθηκεύεται
+    else day.order = order;
     // καθρέφτης πρώτης δραστηριότητας για συμβατότητα με συσκευές σε παλιότερη έκδοση
     day.activity = day.activities[0]
       ? { type: day.activities[0].type, time: day.activities[0].time, duration: day.activities[0].duration }
@@ -731,7 +800,7 @@
       if (st.complete) html += "<span class='cchip full'>" + st.tag + " ✓</span>";
       el.innerHTML = html;
     });
-    document.querySelectorAll("#extraCards .extra-card").forEach(function (card) {
+    document.querySelectorAll("#mealCards .extra-card").forEach(function (card) {
       var el = card.querySelector(".x-combo");
       var st = comboStatus({ type: "2άδα" }, card.querySelector(".x-text").value); // τα ενδιάμεσα κρίνονται ως 2άδα (σνακ)
       if (!st) { el.innerHTML = ""; return; }
@@ -743,7 +812,6 @@
     });
   }
   $("mealCards").addEventListener("input", renderComboHints);
-  $("extraCards").addEventListener("input", renderComboHints);
   ["dayNotes", "waterMl", "sleepHours", "kenCount"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave);
@@ -956,7 +1024,15 @@
       var pips = MEALS.map(function (m) {
         return "<span class='hpip" + (mealDone(d, m) ? " on" : "") + "' title='" + esc(mealName(m)) + "'>" + m.emoji + "</span>";
       }).join("");
-      var rows = MEALS.map(function (m) {
+      var xs = dayExtras(d);
+      var rows = dayOrder(d).map(function (tok) {
+        if (/^x\d+$/.test(tok)) {
+          var x = xs[+tok.slice(1)];
+          return "<div class='hrow'><span class='hm'>🍴 " + esc(extraName(x)) +
+            (x.time ? " <span class='htime'>🕐 " + esc(x.time) + "</span>" : "") + "</span><span class='hv'>" +
+            (x.text ? "<span class='part'>" + esc(x.text).replace(/\n/g, "<br>") + "</span>" : "—") + "</span></div>";
+        }
+        var m = MEALS.filter(function (mm) { return mm.id === tok; })[0];
         var vals = m.slots.map(function (s) {
           var v = (d.meals[m.id] || {})[s.id] || "";
           if (!v) return "";
@@ -969,11 +1045,6 @@
         return (vals || tm) ? "<div class='hrow'><span class='hm'>" + label + "</span><span class='hv'>" + (vals || "—") + "</span></div>" : "";
       }).filter(Boolean).join("");
       var extra = "";
-      dayExtras(d).forEach(function (x) {
-        extra += "<div class='hrow'><span class='hm'>🍴 " + esc(extraName(x)) +
-          (x.time ? " <span class='htime'>🕐 " + esc(x.time) + "</span>" : "") + "</span><span class='hv'>" +
-          (x.text ? "<span class='part'>" + esc(x.text).replace(/\n/g, "<br>") + "</span>" : "—") + "</span></div>";
-      });
       dayActivities(d).forEach(function (a) {
         extra += "<div class='hrow'><span class='hm'>" + t("h_act") +
           (a.time ? " <span class='htime'>🕐 " + esc(a.time) + "</span>" : "") + "</span><span class='hv'>" +

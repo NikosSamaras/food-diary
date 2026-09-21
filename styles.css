@@ -216,8 +216,18 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 .cchip.on{background:var(--brand-soft);color:var(--brand-strong);border-color:var(--brand)}
 .cchip.full{background:var(--brand);color:#fff;border-color:var(--brand)}
 
+/* ---------- move meal cards up/down ---------- */
+.move-btns{display:flex;gap:3px}
+.mv{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  border-radius:7px;font-size:.7rem;line-height:1;padding:6px 7px;min-width:28px;
+}
+.mv:hover:not(:disabled){background:var(--brand-soft);color:var(--brand-strong);border-color:var(--brand)}
+.mv:disabled{opacity:.3;cursor:default}
+@keyframes cardMoved{from{box-shadow:0 0 0 3px var(--brand-soft)}to{box-shadow:none}}
+.meal-card.moved{animation:cardMoved .6s ease-out}
+
 /* ---------- extra (intermediate) meals ---------- */
-.extra-cards:empty{display:none}
 .extra-card{border-top-color:var(--accent);border-top-style:dashed}
 .extra-card .meal-title{flex:1;min-width:0}
 .extra-card .x-name{
@@ -378,6 +388,7 @@ code{background:var(--surface-2);padding:1px 6px;border-radius:6px;font-size:.85
   .user-btn .user-name{display:none}
   .user-avatar{width:30px;height:30px}
   .meal-time{font-size:16px;padding:6px 6px} /* αποτρέπει zoom στο iOS */
+  .meal-card .card-head{flex-wrap:wrap} /* τίτλος + ▲▼/ώρα σε δύο γραμμές όταν δεν χωράνε */
   main{padding:12px 10px calc(86px + env(safe-area-inset-bottom))}
   .hrow .hm{flex-basis:100%}
 
