@@ -33,7 +33,7 @@
       act_add: "➕ Προσθήκη δραστηριότητας", act_del: "Αφαίρεση δραστηριότητας",
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα (π.χ. Ενδιάμεσο, Σνακ…)",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
-      mv_up: "Μετακίνηση πάνω", mv_down: "Μετακίνηση κάτω",
+      mv_up: "Μετακίνηση πάνω", mv_down: "Μετακίνηση κάτω", drag_hint: "Σύρε για να αλλάξεις σειρά",
       sk_title: "Ύπνος & Κενώσεις", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
       wn_title: "Νερό & Σημειώσεις", wn_water: "Νερό", notes_label: "Σημειώσεις ημέρας", notes_ph: "Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…",
       clear_day: "Καθαρισμός ημέρας",
@@ -92,7 +92,7 @@
       act_add: "➕ Add activity", act_del: "Remove activity",
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Name (e.g. Snack, Late lunch…)",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
-      mv_up: "Move up", mv_down: "Move down",
+      mv_up: "Move up", mv_down: "Move down", drag_hint: "Drag to reorder",
       sk_title: "Sleep & Bowel Movements", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
       wn_title: "Water & Notes", wn_water: "Water", notes_label: "Day notes", notes_ph: "How you felt, hunger, sleep, anything else…",
       clear_day: "Clear day",
@@ -501,6 +501,9 @@
   /* ============================================================
      ΠΡΟΒΟΛΗ: ΗΜΕΡΑ
      ============================================================ */
+  function dragHandleHtml() {
+    return '<span class="drag-handle" title="' + esc(t("drag_hint")) + '" aria-hidden="true">⠿</span>';
+  }
   function moveBtnsHtml() {
     return '<span class="move-btns">' +
       '<button type="button" class="mv" data-mv="-1" title="' + esc(t("mv_up")) + '" aria-label="' + esc(t("mv_up")) + '">▲</button>' +
@@ -520,7 +523,7 @@
       }).join("");
       card.innerHTML =
         '<div class="card-head">' +
-          '<div class="meal-title"><span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(mealName(m)) + '</h2></div>' +
+          '<div class="meal-title">' + dragHandleHtml() + '<span class="meal-emoji">' + m.emoji + '</span><h2>' + esc(mealName(m)) + '</h2></div>' +
           '<div class="meal-head-right">' +
             moveBtnsHtml() +
             '<input type="time" class="meal-time" data-meal="' + m.id + '" title="' + esc(t("meal_time")) + '" aria-label="' + esc(t("meal_time")) + ' — ' + esc(mealName(m)) + '">' +
@@ -538,7 +541,7 @@
   function extraCardHtml(x) {
     return '<div class="card meal-card extra-card">' +
       '<div class="card-head">' +
-        '<div class="meal-title"><span class="meal-emoji">🍴</span>' +
+        '<div class="meal-title">' + dragHandleHtml() + '<span class="meal-emoji">🍴</span>' +
           '<input type="text" class="x-name" placeholder="' + esc(t("extra_name_ph")) + '" autocomplete="off" value="' + esc(x.name || "") + '" aria-label="' + esc(t("extra_name_ph")) + '">' +
         '</div>' +
         '<div class="meal-head-right">' +
@@ -595,6 +598,85 @@
     if (card.scrollIntoView) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
     scheduleSave();
   });
+  /* Σύρε-και-άφησε (pointer events: ποντίκι + αφή). Ξεκινά από τη λαβή ⠿ σε κάθε συσκευή,
+     ή από ολόκληρη την κεφαλίδα της κάρτας με ποντίκι. Η κάρτα «ακολουθεί» το δάχτυλο ως
+     αντίγραφο, ενώ η θέση της στο πλέγμα αλλάζει ζωντανά. */
+  var drag = null;
+  function dragStart(e, card) {
+    var r = card.getBoundingClientRect();
+    var ghost = card.cloneNode(true);
+    // το cloneNode δεν αντιγράφει τις τρέχουσες τιμές των πεδίων
+    var src = card.querySelectorAll("input,textarea"), dst = ghost.querySelectorAll("input,textarea");
+    src.forEach(function (el, i) { dst[i].value = el.value; });
+    ghost.className = "card meal-card drag-ghost" + (card.classList.contains("duo") ? " duo" : "") + (card.classList.contains("extra-card") ? " extra-card" : "");
+    ghost.style.width = r.width + "px";
+    ghost.style.height = r.height + "px";
+    ghost.style.left = r.left + "px";
+    ghost.style.top = r.top + "px";
+    document.body.appendChild(ghost);
+    drag = { card: card, ghost: ghost, dx: e.clientX - r.left, dy: e.clientY - r.top, x: e.clientX, y: e.clientY, from: readOrder().join(","), pid: e.pointerId, target: e.target };
+    card.classList.add("dragging");
+    document.body.classList.add("is-dragging");
+    try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
+    drag.timer = setInterval(dragAutoScroll, 16);
+  }
+  function dragMove(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    e.preventDefault();
+    drag.x = e.clientX; drag.y = e.clientY;
+    dragPlaceGhost();
+    var over = document.elementsFromPoint(e.clientX, e.clientY).filter(function (el) {
+      return el.classList && el.classList.contains("meal-card") && el !== drag.ghost && el !== drag.card && el.closest("#mealCards");
+    })[0];
+    if (!over) return;
+    var cards = allCards();
+    var from = cards.indexOf(drag.card), to = cards.indexOf(over);
+    if (to > from) over.parentNode.insertBefore(drag.card, over.nextSibling); // πάνω από επόμενη κάρτα → μετά από αυτήν
+    else over.parentNode.insertBefore(drag.card, over);                      // πάνω από προηγούμενη → πριν από αυτήν
+    updateMoveButtons();
+  }
+  function dragPlaceGhost() {
+    drag.ghost.style.left = (drag.x - drag.dx) + "px";
+    drag.ghost.style.top = (drag.y - drag.dy) + "px";
+  }
+  function dragAutoScroll() {
+    if (!drag) return;
+    var edge = 70, step = 0;
+    if (drag.y < edge) step = -Math.ceil((edge - drag.y) / 5);
+    else if (drag.y > window.innerHeight - edge) step = Math.ceil((drag.y - (window.innerHeight - edge)) / 5);
+    if (step) window.scrollBy(0, step);
+  }
+  function dragEnd(e) {
+    if (!drag || (e && e.pointerId !== drag.pid)) return;
+    clearInterval(drag.timer);
+    drag.ghost.remove();
+    drag.card.classList.remove("dragging");
+    document.body.classList.remove("is-dragging");
+    try { drag.target.releasePointerCapture(drag.pid); } catch (err) {}
+    var changed = readOrder().join(",") !== drag.from;
+    var card = drag.card;
+    drag = null;
+    if (changed) {
+      card.classList.remove("moved"); void card.offsetWidth; card.classList.add("moved");
+      scheduleSave();
+    }
+  }
+  $("mealCards").addEventListener("pointerdown", function (e) {
+    if (drag || e.button > 0) return;
+    var card = e.target.closest(".meal-card");
+    if (!card) return;
+    var onHandle = !!e.target.closest(".drag-handle");
+    // με ποντίκι πιάνεις και ολόκληρη την κεφαλίδα (όχι πεδία/κουμπιά)· με αφή μόνο τη λαβή,
+    // ώστε το scroll της σελίδας να δουλεύει κανονικά
+    var onHead = e.pointerType === "mouse" && e.target.closest(".card-head") && !e.target.closest("input,textarea,button");
+    if (!onHandle && !onHead) return;
+    e.preventDefault();
+    dragStart(e, card);
+  });
+  $("mealCards").addEventListener("pointermove", dragMove);
+  $("mealCards").addEventListener("pointerup", dragEnd);
+  $("mealCards").addEventListener("pointercancel", dragEnd);
+  window.addEventListener("blur", function () { dragEnd(); });
   function readExtras() {
     var out = [];
     document.querySelectorAll("#mealCards .extra-card").forEach(function (card) {
