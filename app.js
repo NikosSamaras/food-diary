@@ -34,6 +34,8 @@
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα (π.χ. Ενδιάμεσο, Σνακ…)",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
       mv_up: "Μετακίνηση πάνω", mv_down: "Μετακίνηση κάτω", drag_hint: "Σύρε για να αλλάξεις σειρά",
+      xn_morning: "Πρωινό σνακ", xn_midmorning: "Δεκατιανό", xn_midday: "Μεσημεριανό σνακ",
+      xn_afternoon: "Απογευματινό σνακ", xn_evening: "Βραδινό σνακ", xn_night: "Νυχτερινό σνακ",
       sk_title: "Ύπνος & Κενώσεις", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
       wn_title: "Νερό & Σημειώσεις", wn_water: "Νερό", notes_label: "Σημειώσεις ημέρας", notes_ph: "Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…",
       clear_day: "Καθαρισμός ημέρας",
@@ -93,6 +95,8 @@
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Name (e.g. Snack, Late lunch…)",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
       mv_up: "Move up", mv_down: "Move down", drag_hint: "Drag to reorder",
+      xn_morning: "Morning snack", xn_midmorning: "Mid-morning snack", xn_midday: "Midday snack",
+      xn_afternoon: "Afternoon snack", xn_evening: "Evening snack", xn_night: "Late-night snack",
       sk_title: "Sleep & Bowel Movements", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
       wn_title: "Water & Notes", wn_water: "Water", notes_label: "Day notes", notes_ph: "How you felt, hunger, sleep, anything else…",
       clear_day: "Clear day",
@@ -351,7 +355,23 @@
     // Ενδιάμεσα/έξτρα γεύματα πέρα από τα 5 βασικά: [{ name, time, text }]
     return (d && d.extras && d.extras.length) ? d.extras : [];
   }
-  function extraName(x) { return (x.name || "").trim() || t("extra_default"); }
+  function timeMin(tm) {
+    var m = /^(\d{1,2}):(\d{2})/.exec(tm || "");
+    return m ? (+m[1]) * 60 + (+m[2]) : null;
+  }
+  // Αυτόματο όνομα ενδιάμεσου γεύματος από την ώρα του (όσο ο χρήστης δεν έχει γράψει δικό του)
+  function autoExtraName(tm) {
+    var n = timeMin(tm);
+    if (n == null) return "";
+    if (n < 4 * 60) return t("xn_night");
+    if (n < 10 * 60) return t("xn_morning");
+    if (n < 12 * 60 + 30) return t("xn_midmorning");
+    if (n < 15 * 60 + 30) return t("xn_midday");
+    if (n < 18 * 60 + 30) return t("xn_afternoon");
+    if (n < 21 * 60 + 30) return t("xn_evening");
+    return t("xn_night");
+  }
+  function extraName(x) { return (x.name || "").trim() || autoExtraName(x.time) || t("extra_default"); }
   // Σειρά καρτών της ημέρας: ids βασικών γευμάτων + "x0","x1"… για τα ενδιάμεσα.
   // Αν λείπει (παλιές ημέρες) → προεπιλεγμένη σειρά και τα ενδιάμεσα στο τέλος.
   function defaultOrder(d) {
@@ -542,7 +562,7 @@
     return '<div class="card meal-card extra-card">' +
       '<div class="card-head">' +
         '<div class="meal-title">' + dragHandleHtml() + '<span class="meal-emoji">🍴</span>' +
-          '<input type="text" class="x-name" placeholder="' + esc(t("extra_name_ph")) + '" autocomplete="off" value="' + esc(x.name || "") + '" aria-label="' + esc(t("extra_name_ph")) + '">' +
+          '<input type="text" class="x-name" placeholder="' + esc(t("extra_name_ph")) + '" autocomplete="off" value="' + esc((x.name || "").trim() || autoExtraName(x.time)) + '" data-auto="' + esc((x.name || "").trim() ? "" : autoExtraName(x.time)) + '" aria-label="' + esc(t("extra_name_ph")) + '">' +
         '</div>' +
         '<div class="meal-head-right">' +
           moveBtnsHtml() +
@@ -680,8 +700,11 @@
   function readExtras() {
     var out = [];
     document.querySelectorAll("#mealCards .extra-card").forEach(function (card) {
+      var nameEl = card.querySelector(".x-name");
+      var nm = nameEl.value.trim();
+      if (nm && nm === nameEl.dataset.auto) nm = ""; // αυτόματο όνομα → δεν αποθηκεύεται, προκύπτει από την ώρα
       var x = {
-        name: card.querySelector(".x-name").value.trim(),
+        name: nm,
         time: card.querySelector(".x-time").value,
         text: card.querySelector(".x-text").value.trim()
       };
@@ -867,6 +890,43 @@
   ["mealCards"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave); // τα input[type=time] ενημερώνουν αξιόπιστα στο change
+  });
+  /* Αλλαγή ώρας σε κάρτα: (α) ενδιάμεσο χωρίς δικό του όνομα → παίρνει όνομα από την ώρα,
+     (β) η κάρτα μετακινείται αυτόματα στη χρονολογική της θέση ανάμεσα στις κάρτες που έχουν ώρα */
+  function cardTime(card) {
+    var inp = card.querySelector(".meal-time");
+    return inp ? timeMin(inp.value) : null;
+  }
+  function placeCardByTime(card) {
+    var tmin = cardTime(card);
+    if (tmin == null) return false;
+    var cards = allCards(), idx = cards.indexOf(card);
+    var lastBefore = null, firstAfter = null, ok = true;
+    cards.forEach(function (c, i) {
+      if (c === card) return;
+      var ct = cardTime(c);
+      if (ct == null) return;
+      if (ct <= tmin) { lastBefore = c; if (i > idx) ok = false; }
+      else { if (!firstAfter) firstAfter = c; if (i < idx) ok = false; }
+    });
+    if (ok) return false; // είναι ήδη σε σωστή χρονολογική θέση
+    if (lastBefore) lastBefore.parentNode.insertBefore(card, lastBefore.nextSibling);
+    else if (firstAfter) firstAfter.parentNode.insertBefore(card, firstAfter);
+    else return false;
+    updateMoveButtons();
+    card.classList.remove("moved"); void card.offsetWidth; card.classList.add("moved");
+    if (card.scrollIntoView) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    return true;
+  }
+  $("mealCards").addEventListener("change", function (e) {
+    var inp = e.target.closest(".meal-time");
+    if (!inp) return;
+    var card = inp.closest(".meal-card");
+    var nameEl = card.querySelector(".x-name");
+    if (nameEl && (!nameEl.value.trim() || nameEl.value.trim() === nameEl.dataset.auto)) {
+      nameEl.value = nameEl.dataset.auto = autoExtraName(inp.value);
+    }
+    placeCardByTime(card);
   });
   /* Ζωντανή ένδειξη 3άδας/2άδας καθώς γράφεις */
   function renderComboHints() {
