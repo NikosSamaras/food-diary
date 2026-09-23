@@ -36,6 +36,11 @@
       mv_up: "Μετακίνηση πάνω", mv_down: "Μετακίνηση κάτω", drag_hint: "Σύρε για να αλλάξεις σειρά",
       xn_morning: "Πρωινό σνακ", xn_midmorning: "Δεκατιανό", xn_midday: "Μεσημεριανό σνακ",
       xn_afternoon: "Απογευματινό σνακ", xn_evening: "Βραδινό σνακ", xn_night: "Νυχτερινό σνακ",
+      us_title: "⏱ Χρόνος συμπλήρωσης", us_hint: "Ενεργός χρόνος μέσα στην εφαρμογή ανά ημέρα και λογαριασμό (μετράει όσο η σελίδα είναι ανοιχτή και γίνεται κάτι· παύει μετά από 1 λεπτό αδράνειας). Το βλέπεις μόνο εσύ.",
+      us_refresh: "Ανανέωση", us_total: "Σύνολο", us_avg: "Μ.ό. / ενεργή ημέρα", us_days: "Ενεργές ημέρες", us_date: "Ημερομηνία",
+      us_none: "Δεν υπάρχουν μετρήσεις ακόμη.", us_local: "Χωρίς online συγχρονισμό — φαίνεται μόνο ο χρόνος αυτής της συσκευής.",
+      us_loading: "Φόρτωση από το cloud…", us_err: "Δεν φορτώθηκαν τα online δεδομένα — φαίνεται μόνο αυτή η συσκευή.",
+      dur_s: "δ", dur_m: "λ", dur_h: "ω",
       sk_title: "Ύπνος & Κενώσεις", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
       wn_title: "Νερό & Σημειώσεις", wn_water: "Νερό", notes_label: "Σημειώσεις ημέρας", notes_ph: "Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…",
       clear_day: "Καθαρισμός ημέρας",
@@ -97,6 +102,11 @@
       mv_up: "Move up", mv_down: "Move down", drag_hint: "Drag to reorder",
       xn_morning: "Morning snack", xn_midmorning: "Mid-morning snack", xn_midday: "Midday snack",
       xn_afternoon: "Afternoon snack", xn_evening: "Evening snack", xn_night: "Late-night snack",
+      us_title: "⏱ Time spent filling in", us_hint: "Active time in the app per day and account (counts while the page is open and something happens; pauses after 1 minute of inactivity). Only you can see this.",
+      us_refresh: "Refresh", us_total: "Total", us_avg: "Avg / active day", us_days: "Active days", us_date: "Date",
+      us_none: "No measurements yet.", us_local: "No online sync — only this device's time is shown.",
+      us_loading: "Loading from the cloud…", us_err: "Online data did not load — only this device is shown.",
+      dur_s: "s", dur_m: "m", dur_h: "h",
       sk_title: "Sleep & Bowel Movements", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
       wn_title: "Water & Notes", wn_water: "Water", notes_label: "Day notes", notes_ph: "How you felt, hunger, sleep, anything else…",
       clear_day: "Clear day",
@@ -471,7 +481,7 @@
     });
     if (name === "week") renderWeek();
     if (name === "history") renderHistory();
-    if (name === "export") initExportRange();
+    if (name === "export") { initExportRange(); renderUsageCard(); }
     window.scrollTo({ top: 0 });
   }
 
@@ -1554,11 +1564,13 @@
     if (id === profiles.current) { closeUserModal(); return; }
     clearTimeout(saveDebounce);
     saveCurrentDay();
+    usageFlush();
     profiles.current = id;
     persistProfiles();
     db = loadDb();
     refreshAllViews();
     attachSync();
+    renderUsageCard();
     closeUserModal();
     toast(t("user_toast") + currentUser().name + " 👤");
   }
@@ -1851,6 +1863,125 @@
       ? t("foot_days").replace("{n}", keys.length).replace("{d}", fmtGr(keys[0]))
       : t("foot_none");
   }
+
+  /* ============================================================
+     ΧΡΟΝΟΣ ΧΡΗΣΗΣ — πόσο «ενεργό» χρόνο περνάει κάθε λογαριασμός στην εφαρμογή ανά ημέρα.
+     Μετράει ανά 5" όσο η σελίδα είναι ορατή, έχει επιλεγεί λογαριασμός και υπήρξε
+     ενέργεια (άγγιγμα/πληκτρολόγηση/scroll) το τελευταίο 1'. Αποθηκεύεται τοπικά και
+     ανεβαίνει στο cloud με increment (users/{uid}/meta/usage), ώστε να αθροίζονται
+     πολλές συσκευές. Εμφανίζεται ΜΟΝΟ στους λογαριασμούς της USAGE_VIEWERS.
+     ============================================================ */
+  var USAGE_KEY = "imerologio-usage-v1";
+  var USAGE_VIEWERS = ["nikos"];
+  var USAGE_TICK = 5, USAGE_IDLE_MS = 60000, USAGE_PUSH_MS = 60000;
+  var usageLastAct = Date.now(), usageLastPush = 0;
+  function usageKeyFor(uid) { return USAGE_KEY + ":u:" + uid; }
+  function loadUsage(uid) {
+    try { var u = JSON.parse(localStorage.getItem(usageKeyFor(uid)) || "{}") || {}; u.days = u.days || {}; u.pending = u.pending || {}; return u; }
+    catch (e) { return { days: {}, pending: {} }; }
+  }
+  function saveUsage(uid, u) { try { localStorage.setItem(usageKeyFor(uid), JSON.stringify(u)); } catch (e) {} }
+  ["pointerdown", "pointermove", "keydown", "input", "touchstart", "scroll", "wheel"].forEach(function (ev) {
+    document.addEventListener(ev, function () { usageLastAct = Date.now(); }, { passive: true, capture: true });
+  });
+  function usageTick() {
+    if (document.visibilityState !== "visible") return;
+    if (lockedPick || !profiles || !profiles.current) return; // δεν έχει διαλεχτεί ακόμη λογαριασμός
+    if (Date.now() - usageLastAct > USAGE_IDLE_MS) return;
+    var uid = profiles.current, k = todayKey(), u = loadUsage(uid);
+    u.days[k] = (u.days[k] || 0) + USAGE_TICK;
+    u.pending[k] = (u.pending[k] || 0) + USAGE_TICK;
+    saveUsage(uid, u);
+    if (Date.now() - usageLastPush > USAGE_PUSH_MS) usageFlush();
+  }
+  function usageDoc(uid) { return famDoc().collection("users").doc(uid).collection("meta").doc("usage"); }
+  function usageFlush() {
+    if (!syncEnabled() || !profiles || !profiles.current) return;
+    var uid = profiles.current, u = loadUsage(uid);
+    var keys = Object.keys(u.pending).filter(function (k) { return u.pending[k] > 0; });
+    if (!keys.length) return;
+    usageLastPush = Date.now();
+    var inc = {}, sent = {};
+    keys.forEach(function (k) { sent[k] = u.pending[k]; inc[k] = firebase.firestore.FieldValue.increment(u.pending[k]); });
+    u.pending = {}; // αισιόδοξα· σε αποτυχία τα ξαναπροσθέτουμε
+    saveUsage(uid, u);
+    try {
+      usageDoc(uid).set({ days: inc, up: Date.now() }, { merge: true }).catch(function () {
+        var u2 = loadUsage(uid);
+        keys.forEach(function (k) { u2.pending[k] = (u2.pending[k] || 0) + sent[k]; });
+        saveUsage(uid, u2);
+      });
+    } catch (e) {}
+  }
+  setInterval(usageTick, USAGE_TICK * 1000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") usageFlush(); });
+  window.addEventListener("pagehide", usageFlush);
+
+  function fmtDur(sec) {
+    sec = Math.round(sec || 0);
+    if (sec < 60) return sec + t("dur_s");
+    var m = Math.round(sec / 60);
+    if (m < 60) return m + t("dur_m");
+    return Math.floor(m / 60) + t("dur_h") + " " + pad(m % 60) + t("dur_m");
+  }
+  function canSeeUsage() { return !!(profiles && USAGE_VIEWERS.indexOf(profiles.current) !== -1); }
+  function renderUsageCard() {
+    var card = $("usageCard");
+    if (!card) return;
+    card.hidden = !canSeeUsage();
+    if (card.hidden) { $("usageBody").innerHTML = ""; return; }
+    var users = profiles.users.slice();
+    var data = {}; // uid → {date: sec}
+    users.forEach(function (u) { data[u.id] = {}; });
+    // αυτή η συσκευή (σύνολο + ό,τι δεν έχει ανέβει ακόμη είναι ήδη μέσα στο days)
+    users.forEach(function (u) {
+      var loc = loadUsage(u.id).days;
+      Object.keys(loc).forEach(function (k) { data[u.id][k] = loc[k]; });
+    });
+    if (!syncEnabled()) { drawUsage(users, data, t("us_local")); return; }
+    drawUsage(users, data, t("us_loading"));
+    Promise.all(users.map(function (u) {
+      return usageDoc(u.id).get().then(function (doc) {
+        var d = (doc && doc.exists && doc.data()) || {}, days = d.days || {};
+        // cloud = άθροισμα όλων των συσκευών· η τοπική τιμή μπαίνει μόνο αν είναι μεγαλύτερη (π.χ. δεν ανέβηκε ακόμη)
+        var merged = {};
+        Object.keys(days).forEach(function (k) { merged[k] = days[k] || 0; });
+        Object.keys(data[u.id]).forEach(function (k) { if ((data[u.id][k] || 0) > (merged[k] || 0)) merged[k] = data[u.id][k]; });
+        data[u.id] = merged;
+      });
+    })).then(function () { drawUsage(users, data, ""); })
+      .catch(function () { drawUsage(users, data, t("us_err")); });
+  }
+  function drawUsage(users, data, note) {
+    var dates = {};
+    users.forEach(function (u) { Object.keys(data[u.id]).forEach(function (k) { if (data[u.id][k] > 0) dates[k] = 1; }); });
+    var keys = Object.keys(dates).sort().reverse();
+    var html = note ? "<p class='hint'>" + esc(note) + "</p>" : "";
+    if (!keys.length) { $("usageBody").innerHTML = html + "<p class='hint'>" + esc(t("us_none")) + "</p>"; return; }
+    html += "<div class='usage-wrap'><table class='weekgrid usage'><thead><tr><th>" + esc(t("us_date")) + "</th>";
+    users.forEach(function (u) { html += "<th>" + esc(u.name) + "</th>"; });
+    html += "</tr></thead><tbody>";
+    keys.slice(0, 31).forEach(function (k) {
+      var d = parseKey(k);
+      html += "<tr><th><span class='b'>" + fmtGr(k) + "</span>" + DOW_SHORT[d.getDay()] + "</th>";
+      users.forEach(function (u) { var v = data[u.id][k] || 0; html += "<td" + (v ? "" : " class='dim'") + ">" + (v ? fmtDur(v) : "—") + "</td>"; });
+      html += "</tr>";
+    });
+    var tot = {}, cnt = {};
+    users.forEach(function (u) {
+      tot[u.id] = 0; cnt[u.id] = 0;
+      Object.keys(data[u.id]).forEach(function (k) { if (data[u.id][k] > 0) { tot[u.id] += data[u.id][k]; cnt[u.id]++; } });
+    });
+    html += "<tr class='sum'><th><span class='b'>" + esc(t("us_total")) + "</span></th>";
+    users.forEach(function (u) { html += "<td>" + fmtDur(tot[u.id]) + "</td>"; });
+    html += "</tr><tr class='sum'><th><span class='b'>" + esc(t("us_days")) + "</span></th>";
+    users.forEach(function (u) { html += "<td>" + cnt[u.id] + "</td>"; });
+    html += "</tr><tr class='sum'><th><span class='b'>" + esc(t("us_avg")) + "</span></th>";
+    users.forEach(function (u) { html += "<td>" + (cnt[u.id] ? fmtDur(tot[u.id] / cnt[u.id]) : "—") + "</td>"; });
+    html += "</tr></tbody></table></div>";
+    $("usageBody").innerHTML = html;
+  }
+  $("usageRefresh").addEventListener("click", function () { usageFlush(); renderUsageCard(); });
 
   /* ---------- Εκκίνηση ---------- */
   applyLang();

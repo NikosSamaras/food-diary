@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ημερολόγιο">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 
@@ -224,6 +224,15 @@
       </div>
     </div>
 
+    <div class="card" id="usageCard" hidden>
+      <div class="card-head">
+        <h2 data-i18n="us_title">⏱ Χρόνος συμπλήρωσης</h2>
+        <button class="ghost-btn tiny" id="usageRefresh" type="button" data-i18n="us_refresh">Ανανέωση</button>
+      </div>
+      <p class="hint" data-i18n="us_hint">Ενεργός χρόνος μέσα στην εφαρμογή ανά ημέρα και λογαριασμό. Το βλέπεις μόνο εσύ.</p>
+      <div id="usageBody"></div>
+    </div>
+
     <div class="card danger-card">
       <div class="card-head"><h2 data-i18n="wipe_title">Διαγραφή όλων</h2></div>
       <p class="hint" data-i18n="wipe_hint">Σβήνει οριστικά όλες τις καταγραφές από αυτόν τον browser.</p>
@@ -277,8 +286,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="xlsx.js?v=15"></script>
-<script src="app.js?v=15"></script>
+<script src="xlsx.js?v=16"></script>
+<script src="app.js?v=16"></script>
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function () {});
