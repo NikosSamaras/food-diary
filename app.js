@@ -498,6 +498,7 @@
   $("langBtn").addEventListener("click", function () {
     lang = lang === "el" ? "en" : "el";
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    flushSave();
     applyLang();
     buildMealCards();
     renderDay();
@@ -829,19 +830,24 @@
     var label = DOW[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
     $("dayName").textContent = label + (currentKey === todayKey() ? t("today_suffix") : "");
 
+    // Το πεδίο που πληκτρολογείται αυτή τη στιγμή δεν πειράζεται (μπορεί να έχει κείμενο που δεν
+    // αποθηκεύτηκε ακόμη)· όλα τα υπόλοιπα ενημερώνονται από τη βάση (π.χ. αλλαγές από άλλη συσκευή).
+    var ae = document.activeElement;
+    var keep = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && ae.closest("#view-day") ? ae : null;
+    function setVal(el, v) { if (el && el !== keep) el.value = v; }
     document.querySelectorAll("#mealCards [data-slot]").forEach(function (inp) {
-      inp.value = (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "";
+      setVal(inp, (day.meals[inp.dataset.meal] || {})[inp.dataset.slot] || "");
     });
     document.querySelectorAll("#mealCards .meal-time[data-meal]").forEach(function (inp) {
-      inp.value = (day.times || {})[inp.dataset.meal] || "";
+      setVal(inp, (day.times || {})[inp.dataset.meal] || "");
     });
-    layoutCards(day);
-    renderActivities(dayActivities(day));
-    $("dayNotes").value = day.notes || "";
+    if (!keep) layoutCards(day); // οι κάρτες ξαναστήνονται μόνο όταν δεν γράφει κανείς (αλλιώς χάνεται η εστίαση)
+    if (!(keep && keep.closest("#actList"))) renderActivities(dayActivities(day));
+    setVal($("dayNotes"), day.notes || "");
     var ml = getWaterMl(day);
-    $("waterMl").value = ml > 0 ? ml : "";
-    $("sleepHours").value = day.sleep > 0 ? day.sleep : "";
-    $("kenCount").value = day.kenoseis > 0 ? day.kenoseis : "";
+    setVal($("waterMl"), ml > 0 ? ml : "");
+    setVal($("sleepHours"), day.sleep > 0 ? day.sleep : "");
+    setVal($("kenCount"), day.kenoseis > 0 ? day.kenoseis : "");
     renderComboHints();
     updateProgress(day);
   }
@@ -862,7 +868,12 @@
     clearTimeout(saveDebounce);
     saveDebounce = setTimeout(saveCurrentDay, 350);
   }
+  function flushSave() {
+    // αν εκκρεμεί αποθήκευση (debounce) κάν' την ΤΩΡΑ — πριν κρυφτεί/κλείσει η σελίδα ή ξαναζωγραφιστεί η ημέρα
+    if (saveDebounce) { clearTimeout(saveDebounce); saveCurrentDay(); }
+  }
   function saveCurrentDay() {
+    clearTimeout(saveDebounce); saveDebounce = null;
     var day = getDay(currentKey);
     document.querySelectorAll("#mealCards [data-slot]").forEach(function (inp) {
       if (!day.meals[inp.dataset.meal]) day.meals[inp.dataset.meal] = {};
@@ -897,6 +908,9 @@
     flashSaved();
     updateFootStats();
   }
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flushSave(); });
+  window.addEventListener("pagehide", flushSave);
+  window.addEventListener("beforeunload", flushSave);
   ["mealCards"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave); // τα input[type=time] ενημερώνουν αξιόπιστα στο change
@@ -1656,9 +1670,9 @@
       localStorage.setItem(FAMILY_KEY + "-autoset", "1");
     }
   } catch (e) { familyCode = familyCode || DEFAULT_FAMILY; }
-  var fdb = null, daysUnsub = null, profUnsub = null;
+  var fdb = null, daysUnsub = null, profUnsub = null, syncReady = false;
 
-  function syncEnabled() { return !!(fdb && familyCode && familyCode !== "__off__"); }
+  function syncEnabled() { return !!(fdb && syncReady && familyCode && familyCode !== "__off__"); }
   function setSyncStatus(txt) {
     $("syncStatus").textContent = txt;
     updateSyncCard();
@@ -1681,7 +1695,11 @@
     try {
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       fdb = firebase.firestore();
-      attachSync();
+      // Τοπική ουρά εγγραφών στη συσκευή: ό,τι γράφεται χωρίς σήμα ή λίγο πριν κλείσει η εφαρμογή
+      // ανεβαίνει αυτόματα στην επόμενη σύνδεση, αντί να χαθεί. Πρέπει να κληθεί πριν από κάθε άλλη χρήση.
+      var ready = Promise.resolve();
+      try { if (fdb.enablePersistence) ready = fdb.enablePersistence({ synchronizeTabs: true }).catch(function () {}); } catch (e) {}
+      ready.then(function () { syncReady = true; attachSync(); });
     } catch (e) { setSyncStatus("Σφάλμα συγχρονισμού"); }
   }
   function famDoc() { return fdb.collection("families").doc(familyCode); }
@@ -1689,9 +1707,10 @@
 
   function remoteRefresh() {
     // μην πατήσεις πάνω σε κείμενο που πληκτρολογείται τώρα
-    var ae = document.activeElement;
-    var editing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && ae.closest("#view-day");
-    if (!editing) renderDay();
+    // Η ημέρα ξαναζωγραφίζεται ΧΩΡΙΣ να πειραχτεί το πεδίο που γράφεται τώρα· μετά, αν εκκρεμούσε
+    // αποθήκευση, γίνεται από το (ενημερωμένο) DOM ώστε να μη χαθεί ούτε το δικό μας ούτε το απομακρυσμένο.
+    renderDay();
+    flushSave();
     renderWeek();
     renderHistory();
     updateFootStats();
@@ -1706,7 +1725,7 @@
 
     var firstSnap = true;
     daysUnsub = daysCol(uid).onSnapshot(function (snap) {
-      var changed = false;
+      var changed = false, toPush = [], remoteUp = {};
       snap.docChanges().forEach(function (ch) {
         if (ch.doc.metadata.hasPendingWrites) return; // δικές μας τοπικές αλλαγές
         var k = ch.doc.id;
@@ -1717,8 +1736,13 @@
         }
         var remote = migrateDayShape(ch.doc.data()); // παλιά δομή από μη ενημερωμένη συσκευή
         var loc = db[k];
+        remoteUp[k] = remote.up || 0;
         if (!loc || (remote.up || 0) >= (loc.up || 0)) {
-          if (JSON.stringify(remote) !== JSON.stringify(loc || null)) { db[k] = remote; changed = true; }
+          // Το νεότερο κερδίνει, αλλά ΠΟΤΕ δεν σβήνει συμπληρωμένο πεδίο που το cloud έχει κενό
+          // (π.χ. εγγραφή από άλλη συσκευή που δεν είχε δει τα δικά μας). Ένωση, όχι αντικατάσταση.
+          var merged = loc ? mergeDays(remote, loc) : remote;
+          if (JSON.stringify(merged) !== JSON.stringify(loc || null)) { db[k] = merged; changed = true; }
+          if (loc && JSON.stringify(merged) !== JSON.stringify(remote)) toPush.push(k); // το cloud δεν έχει κάτι δικό μας
         }
       });
       var wasFirst = firstSnap;
@@ -1728,10 +1752,17 @@
         var have = {};
         snap.forEach(function (doc) { have[doc.id] = 1; });
         Object.keys(db).forEach(function (k) {
-          if (!have[k] && dayHasData(db[k])) pushDay(uid, k);
+          // λείπει από το cloud, ή το cloud έχει παλιότερη έκδοση από τη δική μας → ανέβασέ την
+          if (dayHasData(db[k]) && (!have[k] || (db[k].up || 0) > (remoteUp[k] || 0)) && toPush.indexOf(k) === -1) toPush.push(k);
         });
       }
       if (changed) { persist(); remoteRefresh(); }
+      toPush.forEach(function (k) {
+        if (!db[k]) return;
+        if (!wasFirst || (db[k].up || 0) <= (remoteUp[k] || 0)) db[k].up = Date.now(); // η ένωση είναι η νεότερη εκδοχή
+        pushDay(uid, k);
+      });
+      if (toPush.length) persist();
       if (wasFirst) maybeCloudSnapshot(uid); // ημερήσιο αντίγραφο ασφαλείας
       setSyncStatus(t("sync_on"));
     }, function (err) {
@@ -1756,12 +1787,39 @@
     }, function () {});
   }
 
+  /* Ένωση δύο εκδοχών της ίδιας ημέρας: βάση η νεότερη (remote), αλλά κάθε πεδίο που εκεί είναι
+     κενό και τοπικά συμπληρωμένο κρατιέται. Έτσι δεν χάνεται ποτέ κείμενο από «αγώνα» συσκευών. */
+  function mergeDays(remote, loc) {
+    var m = JSON.parse(JSON.stringify(remote));
+    if (!m.meals) m.meals = {};
+    if (!m.times) m.times = {};
+    Object.keys(loc.meals || {}).forEach(function (id) {
+      var lm = loc.meals[id] || {};
+      if (!m.meals[id]) m.meals[id] = {};
+      Object.keys(lm).forEach(function (sl) {
+        if ((lm[sl] || "").trim() && !(m.meals[id][sl] || "").trim()) m.meals[id][sl] = lm[sl];
+      });
+    });
+    Object.keys(loc.times || {}).forEach(function (id) { if (loc.times[id] && !m.times[id]) m.times[id] = loc.times[id]; });
+    if (!dayActivities(m).length && dayActivities(loc).length) {
+      m.activities = JSON.parse(JSON.stringify(dayActivities(loc)));
+      m.activity = JSON.parse(JSON.stringify(m.activities[0]));
+    }
+    if (!dayExtras(m).length && dayExtras(loc).length) m.extras = JSON.parse(JSON.stringify(loc.extras));
+    if (!getWaterMl(m) && getWaterMl(loc)) { m.waterMl = getWaterMl(loc); delete m.water; }
+    if (!(m.sleep > 0) && loc.sleep > 0) m.sleep = loc.sleep;
+    if (!(m.kenoseis > 0) && loc.kenoseis > 0) m.kenoseis = loc.kenoseis;
+    if (!(m.notes || "").trim() && (loc.notes || "").trim()) m.notes = loc.notes;
+    if (!m.order && loc.order) m.order = loc.order.slice();
+    return m;
+  }
+
   function pushDay(uid, k, oldData) {
     if (!syncEnabled()) return;
     try {
       var d = db[k];
       if (d) {
-        daysCol(uid).doc(k).set(JSON.parse(JSON.stringify(d)));
+        daysCol(uid).doc(k).set(JSON.parse(JSON.stringify(d))).catch(function () { setSyncStatus(t("sync_err")); });
       } else {
         if (oldData) trashPut(uid, k, oldData); // δικλείδα: πρώτα στον «κάδο», μετά διαγραφή
         daysCol(uid).doc(k).delete();
