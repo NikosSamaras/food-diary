@@ -78,7 +78,7 @@
       c_wipe1: "ΠΡΟΣΟΧΗ: Θα διαγραφούν ΟΛΕΣ οι καταγραφές του χρήστη «{n}» οριστικά. Συνέχεια;",
       c_wipe2: "Σίγουρα; Δεν υπάρχει επαναφορά (εκτός αν έχεις αντίγραφο .json).",
       sync_on: "☁️ Συγχρονισμός ενεργός ✓", sync_run: "☁️ Συγχρονισμός…", sync_err: "☁️ Σφάλμα συγχρονισμού — τα δεδομένα μένουν τοπικά",
-      sync_noload: "Ο συγχρονισμός δεν φόρτωσε (χωρίς σύνδεση;)", sync_none: "Χωρίς online συγχρονισμό",
+      sync_noload: "☁️ Ο συγχρονισμός δεν φόρτωσε (χωρίς σύνδεση;) — νέα προσπάθεια σε λίγο…", sync_none: "Χωρίς online συγχρονισμό",
       x_date: "Ημερομηνία", x_day: "Ημέρα", x_time: "Ώρα", x_food: "Φαγητό",
       x_act_time: "Δραστηριότητα (ώρα)", x_act_type: "Δραστηριότητα (είδος)", x_act_dur: "Δραστηριότητα (διάρκεια)",
       x_sleep: "Ύπνος (ώρες)", x_ken: "Κενώσεις", x_water: "Νερό (ml)", x_notes: "Σημειώσεις", x_time_pfx: "Ώρα",
@@ -144,7 +144,7 @@
       c_wipe1: "WARNING: ALL entries of user “{n}” will be permanently deleted. Continue?",
       c_wipe2: "Are you sure? There is no undo (unless you have a .json backup).",
       sync_on: "☁️ Sync active ✓", sync_run: "☁️ Syncing…", sync_err: "☁️ Sync error — data stays local",
-      sync_noload: "Sync did not load (offline?)", sync_none: "No online sync",
+      sync_noload: "☁️ Sync did not load (offline?) — retrying shortly…", sync_none: "No online sync",
       x_date: "Date", x_day: "Day", x_time: "Time", x_food: "Food",
       x_act_time: "Activity (time)", x_act_type: "Activity (type)", x_act_dur: "Activity (duration)",
       x_sleep: "Sleep (hours)", x_ken: "Bowel movements", x_water: "Water (ml)", x_notes: "Notes", x_time_pfx: "Time",
@@ -1689,17 +1689,71 @@
     }
   }
 
+  /* Αν τα scripts του Firebase (gstatic) δεν φόρτωσαν στο άνοιγμα — π.χ. η εφαρμογή άνοιξε χωρίς
+     σήμα και η ίδια η σελίδα ήρθε από το cache — ξαναφορτώνονται δυναμικά με επαναλήψεις, ώστε
+     ο συγχρονισμός να ξεκινήσει μόλις υπάρξει σύνδεση αντί να μείνει νεκρός ως το επόμενο άνοιγμα. */
+  var FB_SCRIPTS = [
+    "https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"
+  ];
+  var fbLoading = false, fbRetryTimer = null, fbRetryDelay = 8000;
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var el = document.createElement("script");
+      el.src = src; el.async = false;
+      el.onload = resolve; el.onerror = function () { el.remove(); reject(new Error(src)); };
+      document.head.appendChild(el);
+    });
+  }
+  function firebaseAvailable() { return !!(window.firebase && firebase.firestore); }
+  function loadFirebaseScripts() {
+    if (fbLoading || firebaseAvailable()) return;
+    fbLoading = true;
+    clearTimeout(fbRetryTimer);
+    var chain = Promise.resolve();
+    FB_SCRIPTS.forEach(function (src) {
+      chain = chain.then(function () {
+        var have = src === FB_SCRIPTS[0] ? !!window.firebase : firebaseAvailable();
+        return have ? null : loadScript(src); // ό,τι φόρτωσε ήδη δεν ξαναφορτώνεται
+      });
+    });
+    chain.then(function () {
+      fbLoading = false;
+      if (firebaseAvailable()) { fbRetryDelay = 8000; initFirebase(); }
+      else scheduleFirebaseRetry();
+    }).catch(function () { fbLoading = false; scheduleFirebaseRetry(); });
+  }
+  function scheduleFirebaseRetry() {
+    clearTimeout(fbRetryTimer);
+    fbRetryTimer = setTimeout(loadFirebaseScripts, fbRetryDelay);
+    fbRetryDelay = Math.min(fbRetryDelay * 2, 60000);
+  }
+  window.addEventListener("online", function () { if (!firebaseAvailable()) { fbRetryDelay = 8000; loadFirebaseScripts(); } });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && !firebaseAvailable() && familyCode && familyCode !== "__off__") { fbRetryDelay = 8000; loadFirebaseScripts(); }
+  });
+
   function initFirebase() {
     if (!familyCode || familyCode === "__off__") { setSyncStatus(familyCode === "__off__" ? t("sync_none") : ""); return; }
-    if (!window.firebase || !firebase.firestore) { setSyncStatus(t("sync_noload")); return; }
+    if (!firebaseAvailable()) { setSyncStatus(t("sync_noload")); loadFirebaseScripts(); return; }
+    if (fdb) { attachSync(); return; } // ήδη αρχικοποιημένο (π.χ. αλλαγή κωδικού οικογένειας)
     try {
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       fdb = firebase.firestore();
       // Τοπική ουρά εγγραφών στη συσκευή: ό,τι γράφεται χωρίς σήμα ή λίγο πριν κλείσει η εφαρμογή
       // ανεβαίνει αυτόματα στην επόμενη σύνδεση, αντί να χαθεί. Πρέπει να κληθεί πριν από κάθε άλλη χρήση.
+      // Αν δεν απαντήσει γρήγορα (προβληματικό IndexedDB σε κάποια Safari) προχωράμε χωρίς αυτήν.
       var ready = Promise.resolve();
-      try { if (fdb.enablePersistence) ready = fdb.enablePersistence({ synchronizeTabs: true }).catch(function () {}); } catch (e) {}
-      ready.then(function () { syncReady = true; attachSync(); });
+      try {
+        if (fdb.enablePersistence) {
+          ready = Promise.race([
+            fdb.enablePersistence({ synchronizeTabs: true }).catch(function () {}),
+            new Promise(function (res) { setTimeout(res, 4000); })
+          ]);
+        }
+      } catch (e) {}
+      var started = false;
+      ready.then(function () { if (started) return; started = true; syncReady = true; attachSync(); });
     } catch (e) { setSyncStatus("Σφάλμα συγχρονισμού"); }
   }
   function famDoc() { return fdb.collection("families").doc(familyCode); }
