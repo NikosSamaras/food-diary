@@ -187,6 +187,7 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 }
 .badge.trio{background:var(--brand-soft);color:var(--brand-strong)}
 .badge.duo{background:var(--accent-soft);color:var(--accent)}
+.meal-card .card-head{flex-wrap:wrap} /* τίτλος + ▲▼/ώρα σε δύο γραμμές όταν δεν χωράνε (στενές στήλες iPad) */
 .meal-head-right{display:flex;align-items:center;gap:8px;margin-left:auto}
 .meal-time{
   border:1px solid var(--line);background:var(--surface-2);color:var(--text);
@@ -255,7 +256,8 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 
 /* ---------- extra (intermediate) meals ---------- */
 .extra-card{border-top-color:var(--accent);border-top-style:dashed}
-.extra-card .meal-title{flex:1;min-width:0}
+.extra-card .card-head{flex-wrap:wrap}
+.extra-card .meal-title{flex:1 1 170px;min-width:0}
 .extra-card .x-name{
   border:1px solid transparent;background:transparent;color:var(--text);
   font-weight:800;font-size:1.05rem;padding:2px 6px;border-radius:8px;width:100%;min-width:0;
@@ -295,9 +297,13 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 }
 .bloat-range::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--col);box-shadow:0 2px 6px rgba(0,0,0,.2)}
 .bloat-range:focus-visible{outline:2px solid var(--brand);outline-offset:4px;border-radius:999px}
-.mbloat{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+/* Πάντα δύο γραμμές: τίτλος + τιμή πάνω, μπάρα σε όλο το πλάτος από κάτω — σε στενές κάρτες
+   (iPad δύο στήλες) η μπάρα αλλιώς συρρικνωνόταν σε μηδενικό πλάτος. */
+.mbloat{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 8px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+.mbloat .bloat-range{grid-column:1/-1;order:3}
+.mbloat-val{order:2}
 .mbloat-lab{font-size:.74rem;font-weight:700;color:var(--muted);letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
-.mbloat-val{font-size:.78rem;font-weight:800;color:var(--muted);min-width:92px;text-align:right}
+.mbloat-val{font-size:.78rem;font-weight:800;color:var(--muted);text-align:right;white-space:nowrap}
 .bbadge{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:.78rem;color:var(--muted);white-space:nowrap}
 .bloatbar{display:inline-block;vertical-align:middle;width:70px;height:8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin-right:4px}
 .bloatbar i{display:block;height:100%;border-radius:999px}
@@ -418,6 +424,14 @@ code{background:var(--surface-2);padding:1px 6px;border-radius:6px;font-size:.85
 }
 
 /* ---------- print ---------- */
+/* Tablet (iPad landscape): πιο σφιχτή επάνω μπάρα ώστε καρτέλες + χρήστης + ΕΛ/EN + θέμα να χωράνε σε μία γραμμή */
+@media (min-width:641px) and (max-width:1100px){
+  .topbar{gap:8px;justify-content:flex-end} /* όταν τυλίγει, η 2η γραμμή (χρήστης/γλώσσα/θέμα) δεξιά */
+  .tab{padding:7px 10px;font-size:.86rem}
+  .brand-text small{display:none}
+  .user-btn{padding-right:10px}
+}
+
 @media print{
   .topbar,.foot,.daybar,.history-tools,.hactions,.day-actions,.week-export,.toast{display:none!important}
   body{background:#fff;color:#000}
@@ -438,10 +452,7 @@ code{background:var(--surface-2);padding:1px 6px;border-radius:6px;font-size:.85
   .user-btn .user-name{display:none}
   .user-avatar{width:30px;height:30px}
   .meal-time{font-size:16px;padding:6px 6px} /* αποτρέπει zoom στο iOS */
-  .meal-card .card-head{flex-wrap:wrap} /* τίτλος + ▲▼/ώρα σε δύο γραμμές όταν δεν χωράνε */
-  .mbloat{grid-template-columns:1fr auto}
-  .mbloat .bloat-range{grid-column:1/-1;order:3} /* τίτλος + τιμή πάνω, μπάρα από κάτω σε όλο το πλάτος */
-  .mbloat-val{order:2}
+
   main{padding:12px 10px calc(86px + env(safe-area-inset-bottom))}
   .hrow .hm{flex-basis:100%}
 
