@@ -278,6 +278,33 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 }
 .act-row .a-del:hover{background:var(--danger-soft);border-color:var(--danger)}
 
+/* ---------- bloating slider ---------- */
+.bloat{margin-bottom:6px}
+.bloat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.bloat-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.bloat-val{font-weight:800;font-size:.9rem;color:var(--muted)}
+.bloat-row{display:flex;align-items:center;gap:10px}
+.bloat-emoji{font-size:1.25rem;line-height:1}
+.bloat-range{
+  --pct:0%;--col:var(--line);
+  flex:1;min-width:0;height:34px;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;
+}
+.bloat-range::-webkit-slider-runnable-track{
+  height:12px;border-radius:999px;border:1px solid var(--line);
+  background:linear-gradient(90deg,var(--col) 0,var(--col) var(--pct),var(--surface-2) var(--pct),var(--surface-2) 100%);
+}
+.bloat-range::-moz-range-track{height:12px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2)}
+.bloat-range::-moz-range-progress{height:12px;border-radius:999px;background:var(--col)}
+.bloat-range::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-9px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--col);box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+.bloat-range::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--col);box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.bloat-range:focus-visible{outline:2px solid var(--brand);outline-offset:4px;border-radius:999px}
+.bloat-scale{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);padding:2px 34px 0 34px}
+.bloatbar{display:inline-block;vertical-align:middle;width:70px;height:8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin-right:4px}
+.bloatbar i{display:block;height:100%;border-radius:999px}
+
 /* ---------- water ---------- */
 .water{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .water-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
