@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ημερολόγιο">
-<link rel="stylesheet" href="styles.css?v=19">
+<link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 
@@ -72,7 +72,7 @@
 
     <div class="card">
       <div class="card-head">
-        <h2 data-i18n="sk_title">Ύπνος, Κενώσεις &amp; Φούσκωμα</h2>
+        <h2 data-i18n="sk_title">Ύπνος &amp; Κενώσεις</h2>
       </div>
       <div class="water">
         <span class="slot-label" data-i18n="sk_sleep">Ώρες ύπνου</span>
@@ -96,19 +96,6 @@
           <button class="ghost-btn tiny" type="button" data-ken="3">3</button>
           <button class="ghost-btn tiny" id="kenReset" type="button" data-i18n="reset">Μηδενισμός</button>
         </div>
-      </div>
-      <div class="bloat">
-        <div class="bloat-head">
-          <span class="slot-label" data-i18n="sk_bloat">Φούσκωμα / αίσθημα πληρότητας</span>
-          <span class="bloat-right"><span class="bloat-val" id="bloatVal">Δεν σημειώθηκε</span>
-          <button class="ghost-btn tiny" id="bloatReset" type="button" data-i18n="reset">Μηδενισμός</button></span>
-        </div>
-        <div class="bloat-row">
-          <span class="bloat-emoji">😌</span>
-          <input type="range" id="bloat" class="bloat-range" min="0" max="10" step="1" value="0" aria-label="Φούσκωμα 0 έως 10">
-          <span class="bloat-emoji">🎈</span>
-        </div>
-        <div class="bloat-scale"><span data-i18n="bl_lo">Καθόλου</span><span>5</span><span data-i18n="bl_hi">Πολύ φουσκωμένη</span></div>
       </div>
     </div>
 
@@ -299,8 +286,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="xlsx.js?v=19"></script>
-<script src="app.js?v=19"></script>
+<script src="xlsx.js?v=20"></script>
+<script src="app.js?v=20"></script>
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function () {});

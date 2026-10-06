@@ -41,14 +41,14 @@
       us_none: "Δεν υπάρχουν μετρήσεις ακόμη.", us_local: "Χωρίς online συγχρονισμό — φαίνεται μόνο ο χρόνος αυτής της συσκευής.",
       us_loading: "Φόρτωση από το cloud…", us_err: "Δεν φορτώθηκαν τα online δεδομένα — φαίνεται μόνο αυτή η συσκευή.",
       dur_s: "δ", dur_m: "λ", dur_h: "ω",
-      sk_title: "Ύπνος, Κενώσεις & Φούσκωμα", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
-      sk_bloat: "Φούσκωμα / αίσθημα πληρότητας", bl_none: "Δεν σημειώθηκε", bl_0: "Καθόλου", bl_1: "Ελαφρύ", bl_2: "Μέτριο", bl_3: "Έντονο", bl_4: "Πολύ έντονο",
-      bl_lo: "Καθόλου", bl_hi: "Πολύ φουσκωμένη", h_bloat: "🎈 Φούσκωμα", st_bloat: "μ.ό. φούσκωμα /10 🎈", x_bloat: "Φούσκωμα (0-10)",
+      sk_title: "Ύπνος & Κενώσεις", sk_sleep: "Ώρες ύπνου", sk_hours: "ώρες", sk_ken: "Κενώσεις", sk_times: "φορές", reset: "Μηδενισμός",
+      sk_bloat: "Φούσκωμα μετά το γεύμα", bl_none: "—", bl_0: "Καθόλου", bl_1: "Ελαφρύ", bl_2: "Μέτριο", bl_3: "Έντονο", bl_4: "Πολύ έντονο",
+      bl_lo: "Καθόλου", bl_hi: "Πολύ φουσκωμένη", h_bloat: "🎈 Φούσκωμα", st_bloat: "μ.ό. φούσκωμα /10 🎈", x_bloat: "Φούσκωμα ανά γεύμα (0-10)",
       wn_title: "Νερό & Σημειώσεις", wn_water: "Νερό", notes_label: "Σημειώσεις ημέρας", notes_ph: "Πώς ένιωσες, πείνα, ύπνος, οτιδήποτε άλλο…",
       clear_day: "Καθαρισμός ημέρας",
       week_hint: "Πάτησε σε οποιοδήποτε κελί για να επεξεργαστείς εκείνη την ημέρα.",
       week_this: "Τρέχουσα", week_export: "Εξαγωγή εβδομάδας σε Excel", week_meal_col: "Γεύμα",
-      week_extra: "🌙 Ύπνος · 🚽 Κεν. · 🎈 Φούσκ. · 💧 Νερό", week_act: "🏃 Φυσική Δραστ.",
+      week_extra: "🌙 Ύπνος · 🚽 Κεν. · 💧 Νερό", week_act: "🏃 Φυσική Δραστ.",
       hist_search_ph: "Αναζήτηση τροφής, δραστηριότητας, σημείωσης…", all_months: "Όλοι οι μήνες",
       st_days: "καταγεγραμμένες ημέρες", st_full: "πλήρεις ημέρες (5/5)", st_act: "ημέρες με δραστηριότητα",
       st_water: "μ.ό. ml νερού / ημέρα", st_sleep: "μ.ό. ώρες ύπνου 🌙", st_ken: "μ.ό. κενώσεις / ημέρα 🚽", st_streak: "σερί ημερών 🔥",
@@ -109,14 +109,14 @@
       us_none: "No measurements yet.", us_local: "No online sync — only this device's time is shown.",
       us_loading: "Loading from the cloud…", us_err: "Online data did not load — only this device is shown.",
       dur_s: "s", dur_m: "m", dur_h: "h",
-      sk_title: "Sleep, Bowel Movements & Bloating", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
-      sk_bloat: "Bloating / fullness", bl_none: "Not recorded", bl_0: "None", bl_1: "Mild", bl_2: "Moderate", bl_3: "Strong", bl_4: "Very strong",
-      bl_lo: "None", bl_hi: "Very bloated", h_bloat: "🎈 Bloating", st_bloat: "avg bloating /10 🎈", x_bloat: "Bloating (0-10)",
+      sk_title: "Sleep & Bowel Movements", sk_sleep: "Sleep hours", sk_hours: "hours", sk_ken: "Bowel movements", sk_times: "times", reset: "Reset",
+      sk_bloat: "Bloating after the meal", bl_none: "—", bl_0: "None", bl_1: "Mild", bl_2: "Moderate", bl_3: "Strong", bl_4: "Very strong",
+      bl_lo: "None", bl_hi: "Very bloated", h_bloat: "🎈 Bloating", st_bloat: "avg bloating /10 🎈", x_bloat: "Bloating per meal (0-10)",
       wn_title: "Water & Notes", wn_water: "Water", notes_label: "Day notes", notes_ph: "How you felt, hunger, sleep, anything else…",
       clear_day: "Clear day",
       week_hint: "Tap any cell to edit that day.",
       week_this: "This week", week_export: "Export week to Excel", week_meal_col: "Meal",
-      week_extra: "🌙 Sleep · 🚽 BM · 🎈 Bloat · 💧 Water", week_act: "🏃 Activity",
+      week_extra: "🌙 Sleep · 🚽 BM · 💧 Water", week_act: "🏃 Activity",
       hist_search_ph: "Search food, activity, note…", all_months: "All months",
       st_days: "recorded days", st_full: "complete days (5/5)", st_act: "days with activity",
       st_water: "avg ml water / day", st_sleep: "avg sleep hours 🌙", st_ken: "avg bowel mov. / day 🚽", st_streak: "day streak 🔥",
@@ -385,6 +385,19 @@
     if (n < 21 * 60 + 30) return t("xn_evening");
     return t("xn_night");
   }
+  // Φούσκωμα ανά γεύμα: day.mealBloat[mealId] (1–10), ενδιάμεσα: x.bloat. Παλιό ημερήσιο day.bloat → διαβάζεται ως "ημέρα".
+  function mealBloat(d, id) { return (d && d.mealBloat && d.mealBloat[id] > 0) ? d.mealBloat[id] : 0; }
+  function bloatValues(d) {
+    // [{label, v}] όλα τα σημειωμένα φουσκώματα της ημέρας, με τη σειρά των γευμάτων
+    if (!d) return [];
+    var out = [], xs = dayExtras(d);
+    dayOrder(d).forEach(function (tok) {
+      if (/^x\d+$/.test(tok)) { var x = xs[+tok.slice(1)]; if (x && x.bloat > 0) out.push({ label: extraName(x), v: x.bloat }); }
+      else { var v = mealBloat(d, tok); if (v) out.push({ label: t("meal_" + tok), v: v }); }
+    });
+    if (d.bloat > 0) out.push({ label: t("x_day"), v: d.bloat });
+    return out;
+  }
   function extraName(x) { return (x.name || "").trim() || autoExtraName(x.time) || t("extra_default"); }
   // Σειρά καρτών της ημέρας: ids βασικών γευμάτων + "x0","x1"… για τα ενδιάμεσα.
   // Αν λείπει (παλιές ημέρες) → προεπιλεγμένη σειρά και τα ενδιάμεσα στο τέλος.
@@ -402,7 +415,7 @@
     return out;
   }
   function blankDay() {
-    var d = { meals: {}, times: {}, activities: [], activity: { type: "", time: "", duration: "" }, extras: [], waterMl: 0, sleep: 0, kenoseis: 0, bloat: 0, notes: "" };
+    var d = { meals: {}, times: {}, activities: [], activity: { type: "", time: "", duration: "" }, extras: [], mealBloat: {}, waterMl: 0, sleep: 0, kenoseis: 0, notes: "" };
     MEALS.forEach(function (m) {
       d.meals[m.id] = {};
       m.slots.forEach(function (s) { d.meals[m.id][s.id] = ""; });
@@ -416,7 +429,7 @@
   }
   function dayHasData(d) {
     if (!d) return false;
-    if (dayActivities(d).length || dayExtras(d).length || getWaterMl(d) > 0 || d.sleep > 0 || d.kenoseis > 0 || d.bloat > 0 || (d.notes || "").trim()) return true;
+    if (dayActivities(d).length || dayExtras(d).length || getWaterMl(d) > 0 || d.sleep > 0 || d.kenoseis > 0 || bloatValues(d).length || (d.notes || "").trim()) return true;
     for (var m in d.meals) for (var s in d.meals[m]) if ((d.meals[m][s] || "").trim()) return true;
     if (d.times) for (var t in d.times) if ((d.times[t] || "").trim()) return true;
     return false;
@@ -566,7 +579,8 @@
           '</div>' +
         '</div>' +
         '<div class="slots">' + slotsHtml + '</div>' +
-        '<div class="combo-hint" id="combo-' + m.id + '"></div>';
+        '<div class="combo-hint" id="combo-' + m.id + '"></div>' +
+        bloatRowHtml('meal-bloat" data-meal="' + m.id, 0);
       wrap.appendChild(card);
     });
   }
@@ -588,6 +602,14 @@
       '<div class="slots"><label class="slot"><span class="slot-label">' + esc(t("what_ate")) + '</span>' +
         '<textarea rows="3" class="x-text" autocomplete="off" placeholder="' + esc(t("meal_ph")) + '">' + esc(x.text || "") + '</textarea></label></div>' +
       '<div class="combo-hint x-combo"></div>' +
+      bloatRowHtml("x-bloat", x.bloat || 0) +
+      '</div>';
+  }
+  function bloatRowHtml(cls, v) {
+    return '<div class="mbloat">' +
+      '<span class="mbloat-lab">🎈 ' + esc(t("sk_bloat")) + '</span>' +
+      '<input type="range" class="bloat-range ' + cls + '" min="0" max="10" step="1" value="' + (v || 0) + '" aria-label="' + esc(t("sk_bloat")) + ' 0–10">' +
+      '<span class="mbloat-val">—</span>' +
       '</div>';
   }
   function cardFromHtml(html) {
@@ -607,6 +629,7 @@
       if (el) wrap.appendChild(el); // appendChild μετακινεί τον υπάρχοντα κόμβο, δεν τον ξαναφτιάχνει
     });
     updateMoveButtons();
+    paintAllBloat();
   }
   function allCards() { return Array.prototype.slice.call(document.querySelectorAll("#mealCards .meal-card")); }
   function readOrder() {
@@ -723,7 +746,9 @@
         time: card.querySelector(".x-time").value,
         text: card.querySelector(".x-text").value.trim()
       };
-      if (x.name || x.time || x.text) out.push(x); // κενές κάρτες δεν αποθηκεύονται
+      var xb = parseInt(card.querySelector(".x-bloat").value, 10);
+      if (xb > 0) x.bloat = Math.min(xb, 10);
+      if (x.name || x.time || x.text || x.bloat) out.push(x); // κενές κάρτες δεν αποθηκεύονται
     });
     return out;
   }
@@ -731,6 +756,7 @@
     var card = cardFromHtml(extraCardHtml({ name: "", time: "", text: "" }));
     $("mealCards").appendChild(card);
     updateMoveButtons();
+    paintBloatInput(card.querySelector(".x-bloat"));
     card.querySelector(".x-text").focus();
     if (card.scrollIntoView) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
@@ -852,8 +878,10 @@
     setVal($("waterMl"), ml > 0 ? ml : "");
     setVal($("sleepHours"), day.sleep > 0 ? day.sleep : "");
     setVal($("kenCount"), day.kenoseis > 0 ? day.kenoseis : "");
-    setVal($("bloat"), day.bloat > 0 ? day.bloat : 0);
-    paintBloat();
+    document.querySelectorAll("#mealCards .meal-bloat[data-meal]").forEach(function (inp) {
+      setVal(inp, mealBloat(day, inp.dataset.meal));
+    });
+    paintAllBloat();
     renderComboHints();
     updateProgress(day);
   }
@@ -903,8 +931,12 @@
     day.sleep = isFinite(sl) && sl > 0 ? Math.min(sl, 24) : 0;
     var kn = parseInt($("kenCount").value, 10);
     day.kenoseis = isFinite(kn) && kn > 0 ? Math.min(kn, 20) : 0;
-    var bl = parseInt($("bloat").value, 10);
-    day.bloat = isFinite(bl) && bl > 0 ? Math.min(bl, 10) : 0; // 0 = δεν σημειώθηκε
+    day.mealBloat = {};
+    document.querySelectorAll("#mealCards .meal-bloat[data-meal]").forEach(function (inp) {
+      var bl = parseInt(inp.value, 10);
+      if (isFinite(bl) && bl > 0) day.mealBloat[inp.dataset.meal] = Math.min(bl, 10); // 0 = δεν σημειώθηκε
+    });
+    delete day.bloat; // το παλιό ημερήσιο πεδίο αντικαταστάθηκε από το ανά γεύμα
     delete day.water; // παλιά μονάδα (ποτήρια) — μετά την πρώτη επεξεργασία ισχύουν μόνο τα ml
     day.notes = $("dayNotes").value;
     day.up = Date.now(); // χρονοσφραγίδα για τον online συγχρονισμό (νεότερο κερδίζει)
@@ -995,16 +1027,18 @@
     return t("bl_4");
   }
   function bloatColor(v) { return v > 0 ? "hsl(" + Math.round(120 - (v / 10) * 120) + " 70% 42%)" : "var(--muted)"; }
-  function paintBloat() {
-    var v = parseInt($("bloat").value, 10) || 0;
-    $("bloatVal").textContent = v > 0 ? v + "/10 · " + bloatWord(v) : bloatWord(0);
-    $("bloatVal").style.color = bloatColor(v);
-    $("bloat").style.setProperty("--pct", (v * 10) + "%");
-    $("bloat").style.setProperty("--col", v > 0 ? bloatColor(v) : "var(--line)");
+  function paintBloatInput(inp) {
+    var v = parseInt(inp.value, 10) || 0;
+    var val = inp.parentNode.querySelector(".mbloat-val");
+    if (val) { val.textContent = v > 0 ? v + "/10 · " + bloatWord(v) : bloatWord(0); val.style.color = bloatColor(v); }
+    inp.style.setProperty("--pct", (v * 10) + "%");
+    inp.style.setProperty("--col", v > 0 ? bloatColor(v) : "var(--line)");
   }
-  $("bloat").addEventListener("input", paintBloat);
-  $("bloatReset").addEventListener("click", function () { $("bloat").value = 0; paintBloat(); scheduleSave(); });
-  ["dayNotes", "waterMl", "sleepHours", "kenCount", "bloat"].forEach(function (id) {
+  function paintAllBloat() { document.querySelectorAll("#mealCards .bloat-range").forEach(paintBloatInput); }
+  $("mealCards").addEventListener("input", function (e) {
+    if (e.target.classList && e.target.classList.contains("bloat-range")) paintBloatInput(e.target);
+  });
+  ["dayNotes", "waterMl", "sleepHours", "kenCount"].forEach(function (id) {
     $(id).addEventListener("input", scheduleSave);
     $(id).addEventListener("change", scheduleSave);
   });
@@ -1079,6 +1113,8 @@
           }).filter(Boolean);
           var tm = ((day.times || {})[m.id] || "").trim();
           if (tm) parts.unshift("<span class='l'>🕐 " + esc(tm) + "</span>");
+          var mb = mealBloat(day, m.id);
+          if (mb) parts.push("<span class='l' style='color:" + bloatColor(mb) + "'>🎈 " + mb + "/10</span>");
           cell = parts.join("<br>");
         }
         html += "<td data-day='" + k + "'" + (k === tKey ? ' class="today-col"' : "") + ">" + (cell || "&nbsp;") + "</td>";
@@ -1091,7 +1127,8 @@
     keys.forEach(function (k) {
       var cell = dayExtras(db[k]).map(function (x) {
         return "<span class='l'>" + esc(extraName(x)) + (x.time ? " 🕐 " + esc(x.time) : "") + "</span>" +
-          (x.text ? "<br>" + esc(x.text).replace(/\n/g, "<br>") : "");
+          (x.text ? "<br>" + esc(x.text).replace(/\n/g, "<br>") : "") +
+          (x.bloat > 0 ? "<br><span class='l' style='color:" + bloatColor(x.bloat) + "'>🎈 " + x.bloat + "/10</span>" : "");
       }).join("<br>");
       html += "<td data-day='" + k + "'>" + (cell || "&nbsp;") + "</td>";
     });
@@ -1116,7 +1153,6 @@
       var day = db[k], parts = [];
       if (day && day.sleep) parts.push("🌙 " + fmtHours(day.sleep) + " ώ.");
       if (day && day.kenoseis) parts.push("🚽 " + day.kenoseis);
-      if (day && day.bloat) parts.push("🎈 " + day.bloat + "/10");
       var wml = getWaterMl(day);
       if (wml) parts.push("💧 " + wml + " ml");
       html += "<td data-day='" + k + "'>" + (parts.join("<br>") || "&nbsp;") + "</td>";
@@ -1195,7 +1231,7 @@
       waterSum += getWaterMl(d);
       if (d.sleep > 0) { sleepSum += d.sleep; sleepDays++; }
       if (d.kenoseis > 0) { kenSum += d.kenoseis; kenDays++; }
-      if (d.bloat > 0) { blSum += d.bloat; blDays++; }
+      bloatValues(d).forEach(function (b) { blSum += b.v; blDays++; });
     });
     var streak = calcStreak();
     $("historyStats").innerHTML =
@@ -1225,7 +1261,7 @@
           var x = xs[+tok.slice(1)];
           return "<div class='hrow'><span class='hm'>🍴 " + esc(extraName(x)) +
             (x.time ? " <span class='htime'>🕐 " + esc(x.time) + "</span>" : "") + "</span><span class='hv'>" +
-            (x.text ? "<span class='part'>" + esc(x.text).replace(/\n/g, "<br>") + "</span>" : "—") + "</span></div>";
+            (x.text ? "<span class='part'>" + esc(x.text).replace(/\n/g, "<br>") + "</span>" : "—") + bloatBadge(x.bloat) + "</span></div>";
         }
         var m = MEALS.filter(function (mm) { return mm.id === tok; })[0];
         var vals = m.slots.map(function (s) {
@@ -1236,8 +1272,9 @@
             : "<span class='part'><b>" + esc(SLOT_SHORT[s.id]) + ":</b> " + esc(v) + "</span>";
         }).filter(Boolean).join("");
         var tm = ((d.times || {})[m.id] || "").trim();
+        var mb = mealBloat(d, m.id);
         var label = m.emoji + " " + esc(mealName(m)) + (tm ? " <span class='htime'>🕐 " + esc(tm) + "</span>" : "");
-        return (vals || tm) ? "<div class='hrow'><span class='hm'>" + label + "</span><span class='hv'>" + (vals || "—") + "</span></div>" : "";
+        return (vals || tm || mb) ? "<div class='hrow'><span class='hm'>" + label + "</span><span class='hv'>" + (vals || "—") + bloatBadge(mb) + "</span></div>" : "";
       }).filter(Boolean).join("");
       var extra = "";
       dayActivities(d).forEach(function (a) {
@@ -1247,7 +1284,7 @@
       });
       if (d.sleep) extra += "<div class='hrow'><span class='hm'>" + t("h_sleep") + "</span><span class='hv'>" + fmtHours(d.sleep) + (d.sleep === 1 ? t("hour1") : t("hourN")) + "</span></div>";
       if (d.kenoseis) extra += "<div class='hrow'><span class='hm'>" + t("h_ken") + "</span><span class='hv'>" + d.kenoseis + (d.kenoseis === 1 ? t("time1") : t("timeN")) + "</span></div>";
-      if (d.bloat) extra += "<div class='hrow'><span class='hm'>" + t("h_bloat") + "</span><span class='hv'><span class='bloatbar'><i style='width:" + (d.bloat * 10) + "%;background:" + bloatColor(d.bloat) + "'></i></span> " + d.bloat + "/10 · " + esc(bloatWord(d.bloat)) + "</span></div>";
+      if (d.bloat > 0) extra += "<div class='hrow'><span class='hm'>" + t("h_bloat") + "</span><span class='hv'>" + bloatBadge(d.bloat) + "</span></div>"; // παλιά ημερήσια τιμή
       var wml = getWaterMl(d);
       if (wml) extra += "<div class='hrow'><span class='hm'>" + t("h_water") + "</span><span class='hv'>" + wml + " ml</span></div>";
       if ((d.notes || "").trim()) extra += "<div class='hrow'><span class='hm'>" + t("h_notes") + "</span><span class='hv'>" + esc(d.notes) + "</span></div>";
@@ -1259,6 +1296,10 @@
         "<div class='hactions'><button class='ghost-btn tiny' data-edit='" + k + "'>" + t("hist_edit") + "</button></div>" +
         "</div></details>";
     }).join("");
+  }
+  function bloatBadge(v) {
+    if (!(v > 0)) return "";
+    return "<span class='bbadge' title='" + esc(t("sk_bloat")) + "'><span class='bloatbar'><i style='width:" + (v * 10) + "%;background:" + bloatColor(v) + "'></i></span>🎈 " + v + "/10 · " + esc(bloatWord(v)) + "</span>";
   }
   function stat(v, k) { return "<div class='stat'><div class='v'>" + v + "</div><div class='k'>" + k + "</div></div>"; }
   function calcStreak() {
@@ -1330,7 +1371,7 @@
         acts.map(function (a) { return a.time || ""; }).join("\n"),
         acts.map(function (a) { return a.type || ""; }).join("\n"),
         acts.map(function (a) { return a.duration || ""; }).join("\n"),
-        d.sleep || "", d.kenoseis || "", d.bloat || "", getWaterMl(d) || 0, d.notes || ""
+        d.sleep || "", d.kenoseis || "", bloatValues(d).map(function (b) { return b.label + " " + b.v + "/10"; }).join("\n"), getWaterMl(d) || 0, d.notes || ""
       );
       rows.push(row);
     });
@@ -1383,18 +1424,20 @@
                   if (v) lines.push(m.slots.length === 1 ? v : SLOT_SHORT[s.id] + ": " + v);
                 });
               }
+              var mb = mealBloat(d, m.id);
+              if (mb) lines.push("Φούσκωμα: " + mb + "/10");
             }
             r.push({ v: lines.join("\n"), s: "cell" });
           });
           rows.push(r);
-          heights.push(m.type === "2άδα" ? 58 : 76);
+          heights.push(m.type === "2άδα" ? 64 : 82);
         });
 
         // Γρ.8: ενδιάμεσα γεύματα (δικό μας πεδίο, όνομα + ώρα + φαγητό ανά γραμμή)
         var rX = [{ v: "ΕΝΔΙΑΜΕΣΑ", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) {
           var txt = dayExtras(db[k]).map(function (x) {
-            return extraName(x) + (x.time ? " (" + x.time + ")" : "") + (x.text ? ": " + x.text : "");
+            return extraName(x) + (x.time ? " (" + x.time + ")" : "") + (x.text ? ": " + x.text : "") + (x.bloat > 0 ? " — Φούσκωμα " + x.bloat + "/10" : "");
           }).join("\n");
           rX.push({ v: txt, s: "cell" });
         });
@@ -1416,16 +1459,13 @@
         });
         rows.push(r9); heights.push(52);
 
-        // Γρ.11-15: ύπνος, κενώσεις, φούσκωμα, νερό & σημειώσεις (δικά μας πεδία, στο ίδιο ύφος)
+        // Γρ.11-14: ύπνος, κενώσεις, νερό & σημειώσεις (το φούσκωμα μπαίνει μέσα στο κελί κάθε γεύματος) (δικά μας πεδία, στο ίδιο ύφος)
         var r10 = [{ v: "ΥΠΝΟΣ (ΩΡΕΣ)", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) { r10.push({ v: (db[k] && db[k].sleep) || "", s: "cell" }); });
         rows.push(r10); heights.push(20);
         var rKen = [{ v: "ΚΕΝΩΣΕΙΣ", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) { rKen.push({ v: (db[k] && db[k].kenoseis) || "", s: "cell" }); });
         rows.push(rKen); heights.push(20);
-        var rBl = [{ v: "ΦΟΥΣΚΩΜΑ (0-10)", s: "mealtag" }, { v: "", s: "mealtag" }];
-        keys.forEach(function (k) { rBl.push({ v: (db[k] && db[k].bloat) || "", s: "cell" }); });
-        rows.push(rBl); heights.push(20);
         var r11 = [{ v: "ΝΕΡΟ (ml)", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) { r11.push({ v: getWaterMl(db[k]) || "", s: "cell" }); });
         rows.push(r11); heights.push(20);
@@ -1439,7 +1479,7 @@
           cols: [15, 4.5, 18, 18, 18, 18, 18, 18, 18],
           rows: rows,
           heights: heights,
-          merges: ["A1:B2", "A8:B8", "A9:B10", "A11:B11", "A12:B12", "A13:B13", "A14:B14", "A15:B15"],
+          merges: ["A1:B2", "A8:B8", "A9:B10", "A11:B11", "A12:B12", "A13:B13", "A14:B14"],
           landscape: true
         });
       }
@@ -1475,7 +1515,7 @@
         acts.map(function (a) { return a.time || ""; }).join(" | "),
         acts.map(function (a) { return a.type || ""; }).join(" | "),
         acts.map(function (a) { return a.duration || ""; }).join(" | "),
-        d.sleep ? fmtHours(d.sleep) : "", d.kenoseis || "", d.bloat || "", getWaterMl(d) || 0, d.notes || ""
+        d.sleep ? fmtHours(d.sleep) : "", d.kenoseis || "", bloatValues(d).map(function (b) { return b.label + " " + b.v + "/10"; }).join(" | "), getWaterMl(d) || 0, d.notes || ""
       );
       lines.push(row.map(q).join(";"));
     });
@@ -1897,6 +1937,10 @@
     if (!(m.sleep > 0) && loc.sleep > 0) m.sleep = loc.sleep;
     if (!(m.kenoseis > 0) && loc.kenoseis > 0) m.kenoseis = loc.kenoseis;
     if (!(m.bloat > 0) && loc.bloat > 0) m.bloat = loc.bloat;
+    if (loc.mealBloat) {
+      if (!m.mealBloat) m.mealBloat = {};
+      Object.keys(loc.mealBloat).forEach(function (id) { if (!(m.mealBloat[id] > 0) && loc.mealBloat[id] > 0) m.mealBloat[id] = loc.mealBloat[id]; });
+    }
     if (!(m.notes || "").trim() && (loc.notes || "").trim()) m.notes = loc.notes;
     if (!m.order && loc.order) m.order = loc.order.slice();
     return m;
