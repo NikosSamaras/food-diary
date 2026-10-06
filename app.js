@@ -608,8 +608,11 @@
   function bloatRowHtml(cls, v) {
     return '<div class="mbloat">' +
       '<span class="mbloat-lab">🎈 ' + esc(t("sk_bloat")) + '</span>' +
-      '<input type="range" class="bloat-range ' + cls + '" min="0" max="10" step="1" value="' + (v || 0) + '" aria-label="' + esc(t("sk_bloat")) + ' 0–10">' +
       '<span class="mbloat-val">—</span>' +
+      '<div class="mbloat-slider">' +
+        '<div class="mbloat-track"><div class="mbloat-fill"></div><div class="mbloat-thumb"></div></div>' +
+        '<input type="range" class="bloat-range ' + cls + '" min="0" max="10" step="1" value="' + (v || 0) + '" aria-label="' + esc(t("sk_bloat")) + ' 0–10">' +
+      '</div>' +
       '</div>';
   }
   function cardFromHtml(html) {
@@ -1029,10 +1032,12 @@
   function bloatColor(v) { return v > 0 ? "hsl(" + Math.round(120 - (v / 10) * 120) + " 70% 42%)" : "var(--muted)"; }
   function paintBloatInput(inp) {
     var v = parseInt(inp.value, 10) || 0;
-    var val = inp.parentNode.querySelector(".mbloat-val");
+    var box = inp.closest(".mbloat"), slider = inp.parentNode;
+    var val = box && box.querySelector(".mbloat-val");
     if (val) { val.textContent = v > 0 ? v + "/10 · " + bloatWord(v) : bloatWord(0); val.style.color = bloatColor(v); }
-    inp.style.setProperty("--pct", (v * 10) + "%");
-    inp.style.setProperty("--col", v > 0 ? bloatColor(v) : "var(--line)");
+    // η ορατή μπάρα ζωγραφίζεται με απλά div (όχι με styling του <input type=range>) — ίδια σε Safari/Chrome
+    slider.style.setProperty("--p", String(v / 10));
+    slider.style.setProperty("--col", v > 0 ? bloatColor(v) : "var(--line)");
   }
   function paintAllBloat() { document.querySelectorAll("#mealCards .bloat-range").forEach(paintBloatInput); }
   $("mealCards").addEventListener("input", function (e) {
@@ -2047,11 +2052,12 @@
   });
 
   /* ---------- Footer ---------- */
+  var APP_VERSION = "v3.3";
   function updateFootStats() {
     var keys = sortedKeys();
-    $("footStats").textContent = keys.length
+    $("footStats").textContent = (keys.length
       ? t("foot_days").replace("{n}", keys.length).replace("{d}", fmtGr(keys[0]))
-      : t("foot_none");
+      : t("foot_none")) + " · " + APP_VERSION;
   }
 
   /* ============================================================

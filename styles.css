@@ -281,26 +281,25 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 .act-row .a-del:hover{background:var(--danger-soft);border-color:var(--danger)}
 
 /* ---------- bloating slider ---------- */
+.mbloat-slider{--p:0;--col:var(--line);position:relative;height:36px;grid-column:1/-1;order:3}
+.mbloat-track{
+  position:absolute;left:0;right:0;top:13px;height:10px;border-radius:999px;
+  background:var(--surface-2);border:1px solid var(--line);
+}
+.mbloat-fill{height:100%;border-radius:999px;background:var(--col);width:calc(13px + (100% - 26px) * var(--p))}
+.mbloat-thumb{
+  position:absolute;top:50%;left:calc(13px + (100% - 26px) * var(--p));transform:translate(-50%,-50%);
+  width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--col);
+  box-shadow:0 2px 6px rgba(0,0,0,.2);pointer-events:none;
+}
 .bloat-range{
-  --pct:0%;--col:var(--line);
-  flex:1;min-width:0;width:100%;height:30px;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer;
+  position:absolute;left:0;top:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;
+  -webkit-appearance:none;appearance:none;touch-action:pan-y;
 }
-.bloat-range::-webkit-slider-runnable-track{
-  height:10px;border-radius:999px;border:1px solid var(--line);
-  background:linear-gradient(90deg,var(--col) 0,var(--col) var(--pct),var(--surface-2) var(--pct),var(--surface-2) 100%);
-}
-.bloat-range::-moz-range-track{height:10px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2)}
-.bloat-range::-moz-range-progress{height:10px;border-radius:999px;background:var(--col)}
-.bloat-range::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;width:26px;height:26px;margin-top:-8px;border-radius:50%;
-  background:var(--surface);border:2px solid var(--col);box-shadow:0 2px 6px rgba(0,0,0,.2);
-}
-.bloat-range::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--col);box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.bloat-range:focus-visible{outline:2px solid var(--brand);outline-offset:4px;border-radius:999px}
+.bloat-range:focus-visible + .mbloat-track,.mbloat-slider:focus-within .mbloat-track{outline:2px solid var(--brand);outline-offset:4px}
 /* Πάντα δύο γραμμές: τίτλος + τιμή πάνω, μπάρα σε όλο το πλάτος από κάτω — σε στενές κάρτες
    (iPad δύο στήλες) η μπάρα αλλιώς συρρικνωνόταν σε μηδενικό πλάτος. */
 .mbloat{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 8px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
-.mbloat .bloat-range{grid-column:1/-1;order:3}
 .mbloat-val{order:2}
 .mbloat-lab{font-size:.74rem;font-weight:700;color:var(--muted);letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
 .mbloat-val{font-size:.78rem;font-weight:800;color:var(--muted);text-align:right;white-space:nowrap}

@@ -1,13 +1,13 @@
 /* Service worker: offline λειτουργία.
    Στρατηγική: network-first με cache fallback — όταν υπάρχει σύνδεση
    φορτώνει πάντα τη φρέσκια έκδοση, χωρίς σύνδεση σερβίρει το αντίγραφο. */
-var CACHE = "imerologio-v15";
+var CACHE = "imerologio-v16";
 var PRECACHE = [
   "./",
   "index.html",
-  "styles.css?v=21",
-  "app.js?v=21",
-  "xlsx.js?v=21",
+  "styles.css?v=22",
+  "app.js?v=22",
+  "xlsx.js?v=22",
   "manifest.webmanifest",
   "icon.svg",
   "icon-180.png",
