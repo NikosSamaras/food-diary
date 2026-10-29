@@ -31,6 +31,11 @@
       act_title: "Φυσική Δραστηριότητα", act_type: "Είδος", act_time: "Ώρα", act_dur: "Διάρκεια",
       act_type_ph: "π.χ. περπάτημα, γυμναστήριο…", act_dur_ph: "π.χ. 45 λεπτά",
       act_add: "➕ Προσθήκη δραστηριότητας", act_del: "Αφαίρεση δραστηριότητας",
+      pills_title: "💊 Χάπια & Συμπληρώματα", pill_add: "➕ Άλλο χάπι", pill_del: "Αφαίρεση", pill_name_ph: "Όνομα χαπιού…",
+      pill_time: "Ώρα λήψης", pill_taken: "Το πήρα", pill_hint: "Τικ = το πήρε· η ώρα συμπληρώνεται αυτόματα με το τικ (αλλάζει με το χέρι).",
+      pill_melatonin: "Μελατονίνη (ύπνος)", pill_vitamins: "Βιταμίνες Creta Iama", pill_mollers: "Möller's (μουρουνέλαιο)",
+      pills_melatonin: "Μελατονίνη", pills_vitamins: "Creta Iama", pills_mollers: "Möller's",
+      week_pills: "💊 Χάπια", h_pills: "💊 Χάπια", x_pills: "Χάπια", st_pills: "ημέρες με όλα τα χάπια 💊",
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα γεύματος…",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
       mv_up: "Μετακίνηση πάνω", mv_down: "Μετακίνηση κάτω", drag_hint: "Σύρε για να αλλάξεις σειρά",
@@ -99,6 +104,11 @@
       act_title: "Physical Activity", act_type: "Type", act_time: "Time", act_dur: "Duration",
       act_type_ph: "e.g. walking, gym…", act_dur_ph: "e.g. 45 minutes",
       act_add: "➕ Add activity", act_del: "Remove activity",
+      pills_title: "💊 Pills & Supplements", pill_add: "➕ Other pill", pill_del: "Remove", pill_name_ph: "Pill name…",
+      pill_time: "Time taken", pill_taken: "Taken", pill_hint: "Tick = taken; the time fills in automatically on tick (editable).",
+      pill_melatonin: "Melatonin (sleep)", pill_vitamins: "Creta Iama vitamins", pill_mollers: "Möller's (cod liver oil)",
+      pills_melatonin: "Melatonin", pills_vitamins: "Creta Iama", pills_mollers: "Möller's",
+      week_pills: "💊 Pills", h_pills: "💊 Pills", x_pills: "Pills", st_pills: "days with all pills 💊",
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Meal name…",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
       mv_up: "Move up", mv_down: "Move down", drag_hint: "Drag to reorder",
@@ -398,6 +408,31 @@
     if (d.bloat > 0) out.push({ label: t("x_day"), v: d.bloat });
     return out;
   }
+  /* Χάπια / συμπληρώματα: 3 σταθερά (προσυμπληρωμένα) + έξτρα ανά ημέρα.
+     day.pills = [{ id, name?, time, taken }] — αποθηκεύονται μόνο οι γραμμές που έχουν τικ ή ώρα. */
+  var DEFAULT_PILLS = [
+    { id: "melatonin", emoji: "🌙" },
+    { id: "vitamins", emoji: "💊" },
+    { id: "mollers", emoji: "🐟" }
+  ];
+  function dayPills(d) { return (d && d.pills && d.pills.length) ? d.pills : []; }
+  function pillName(p) {
+    var def = DEFAULT_PILLS.filter(function (x) { return x.id === p.id; })[0];
+    return def ? t("pill_" + p.id) : ((p.name || "").trim() || "—");
+  }
+  function pillEmoji(p) {
+    var def = DEFAULT_PILLS.filter(function (x) { return x.id === p.id; })[0];
+    return def ? def.emoji : "💊";
+  }
+  function pillShort(p) { // σύντομο όνομα για Εβδομάδα/Excel
+    var def = DEFAULT_PILLS.filter(function (x) { return x.id === p.id; })[0];
+    return def ? t("pills_" + p.id) : ((p.name || "").trim() || "—");
+  }
+  function pillLine(p) { return (p.taken ? "✓ " : "✗ ") + pillShort(p) + (p.time ? " " + p.time : ""); }
+  function allDefaultPillsTaken(d) {
+    var ps = dayPills(d);
+    return DEFAULT_PILLS.every(function (def) { return ps.some(function (p) { return p.id === def.id && p.taken; }); });
+  }
   function extraName(x) { return (x.name || "").trim() || autoExtraName(x.time) || t("extra_default"); }
   // Σειρά καρτών της ημέρας: ids βασικών γευμάτων + "x0","x1"… για τα ενδιάμεσα.
   // Αν λείπει (παλιές ημέρες) → προεπιλεγμένη σειρά και τα ενδιάμεσα στο τέλος.
@@ -429,7 +464,7 @@
   }
   function dayHasData(d) {
     if (!d) return false;
-    if (dayActivities(d).length || dayExtras(d).length || getWaterMl(d) > 0 || d.sleep > 0 || d.kenoseis > 0 || bloatValues(d).length || (d.notes || "").trim()) return true;
+    if (dayActivities(d).length || dayExtras(d).length || getWaterMl(d) > 0 || d.sleep > 0 || d.kenoseis > 0 || bloatValues(d).length || dayPills(d).length || (d.notes || "").trim()) return true;
     for (var m in d.meals) for (var s in d.meals[m]) if ((d.meals[m][s] || "").trim()) return true;
     if (d.times) for (var t in d.times) if ((d.times[t] || "").trim()) return true;
     return false;
@@ -831,6 +866,62 @@
     scheduleSave();
   });
 
+  /* Χάπια & συμπληρώματα: τικ «το πήρα» + ώρα· με το τικ η ώρα γεμίζει αυτόματα με την τρέχουσα */
+  function nowHHMM() { var d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function pillRowHtml(p, isDefault) {
+    return '<div class="pill-row' + (p.taken ? " taken" : "") + '" data-pill="' + esc(p.id) + '">' +
+      '<label class="p-check"><input type="checkbox" class="p-taken"' + (p.taken ? " checked" : "") + ' aria-label="' + esc(t("pill_taken")) + '"><span class="p-box">✓</span></label>' +
+      '<span class="p-emoji">' + pillEmoji(p) + '</span>' +
+      (isDefault
+        ? '<span class="p-name">' + esc(pillName(p)) + '</span>'
+        : '<input type="text" class="p-name p-custom" placeholder="' + esc(t("pill_name_ph")) + '" autocomplete="off" value="' + esc(p.name || "") + '">') +
+      '<input type="time" class="p-time" value="' + esc(p.time || "") + '" title="' + esc(t("pill_time")) + '" aria-label="' + esc(t("pill_time")) + '">' +
+      (isDefault ? '' : '<button type="button" class="p-del" title="' + esc(t("pill_del")) + '" aria-label="' + esc(t("pill_del")) + '">✕</button>') +
+      '</div>';
+  }
+  function renderPills(list) {
+    var byId = {};
+    (list || []).forEach(function (p) { byId[p.id] = p; });
+    var html = DEFAULT_PILLS.map(function (def) {
+      var p = byId[def.id] || { id: def.id, time: "", taken: false };
+      return pillRowHtml(p, true);
+    }).join("");
+    (list || []).forEach(function (p) { if (!DEFAULT_PILLS.some(function (d) { return d.id === p.id; })) html += pillRowHtml(p, false); });
+    $("pillList").innerHTML = html;
+  }
+  function readPills() {
+    var out = [];
+    document.querySelectorAll("#pillList .pill-row").forEach(function (row) {
+      var id = row.dataset.pill;
+      var isDefault = DEFAULT_PILLS.some(function (d) { return d.id === id; });
+      var p = { id: id, time: row.querySelector(".p-time").value, taken: row.querySelector(".p-taken").checked };
+      if (!isDefault) p.name = row.querySelector(".p-custom").value.trim();
+      if (p.taken || p.time || (!isDefault && p.name)) out.push(p); // άδειες γραμμές δεν αποθηκεύονται
+    });
+    return out;
+  }
+  $("pillAdd").addEventListener("click", function () {
+    $("pillList").insertAdjacentHTML("beforeend", pillRowHtml({ id: "c" + Date.now().toString(36), name: "", time: "", taken: false }, false));
+    var rows = document.querySelectorAll("#pillList .pill-row");
+    rows[rows.length - 1].querySelector(".p-custom").focus();
+  });
+  $("pillList").addEventListener("change", function (e) {
+    if (e.target.classList.contains("p-taken")) {
+      var row = e.target.closest(".pill-row");
+      row.classList.toggle("taken", e.target.checked);
+      var tm = row.querySelector(".p-time");
+      if (e.target.checked && !tm.value) tm.value = nowHHMM(); // η ώρα γεμίζει μόνη της με το τικ
+    }
+    scheduleSave();
+  });
+  $("pillList").addEventListener("input", scheduleSave);
+  $("pillList").addEventListener("click", function (e) {
+    var b = e.target.closest(".p-del");
+    if (!b) return;
+    b.closest(".pill-row").remove();
+    scheduleSave();
+  });
+
   /* Νυχτερινός ύπνος (ώρες, με γρήγορες επιλογές) */
   function fmtHours(v) { return String(v).replace(".", ","); }
   document.querySelectorAll("[data-sleeph]").forEach(function (btn) {
@@ -876,6 +967,7 @@
     });
     if (!keep) layoutCards(day); // οι κάρτες ξαναστήνονται μόνο όταν δεν γράφει κανείς (αλλιώς χάνεται η εστίαση)
     if (!(keep && keep.closest("#actList"))) renderActivities(dayActivities(day));
+    if (!(keep && keep.closest("#pillList"))) renderPills(dayPills(day));
     setVal($("dayNotes"), day.notes || "");
     var ml = getWaterMl(day);
     setVal($("waterMl"), ml > 0 ? ml : "");
@@ -920,6 +1012,7 @@
       day.times[inp.dataset.meal] = inp.value;
     });
     day.activities = readActivities();
+    day.pills = readPills();
     day.extras = readExtras();
     var order = readOrder();
     if (order.join(",") === defaultOrder(day).join(",")) delete day.order; // προεπιλεγμένη σειρά → δεν αποθηκεύεται
@@ -1152,6 +1245,16 @@
     });
     html += "</tr>";
 
+    // Χάπια
+    html += "<tr><th><span class='b'>" + esc(t("week_pills")) + "</span></th>";
+    keys.forEach(function (k) {
+      var cell = dayPills(db[k]).map(function (p) {
+        return "<span class='" + (p.taken ? "pill-ok" : "pill-no") + "'>" + esc(pillLine(p)) + "</span>";
+      }).join("<br>");
+      html += "<td data-day='" + k + "'>" + (cell || "&nbsp;") + "</td>";
+    });
+    html += "</tr>";
+
     // Ύπνος, κενώσεις & νερό
     html += "<tr><th><span class='b'>" + esc(t("week_extra")) + "</span></th>";
     keys.forEach(function (k) {
@@ -1196,6 +1299,7 @@
     if (day.times) for (var t in day.times) parts.push(day.times[t] || "");
     dayActivities(day).forEach(function (a) { parts.push(a.type || "", a.duration || "", a.time || ""); });
     dayExtras(day).forEach(function (x) { parts.push(x.name || "", x.text || "", x.time || ""); });
+    dayPills(day).forEach(function (p) { parts.push(pillName(p)); });
     parts.push(day.notes || "");
     return parts.join(" ").toLowerCase().indexOf(q) !== -1;
   }
@@ -1228,7 +1332,7 @@
 
     // Στατιστικά
     var total = filtered.length;
-    var full = 0, actDays = 0, waterSum = 0, sleepSum = 0, sleepDays = 0, kenSum = 0, kenDays = 0, blSum = 0, blDays = 0;
+    var full = 0, actDays = 0, waterSum = 0, sleepSum = 0, sleepDays = 0, kenSum = 0, kenDays = 0, blSum = 0, blDays = 0, pillDays = 0;
     filtered.forEach(function (k) {
       var d = db[k];
       if (mealsDoneCount(d) === MEALS.length) full++;
@@ -1237,6 +1341,7 @@
       if (d.sleep > 0) { sleepSum += d.sleep; sleepDays++; }
       if (d.kenoseis > 0) { kenSum += d.kenoseis; kenDays++; }
       bloatValues(d).forEach(function (b) { blSum += b.v; blDays++; });
+      if (allDefaultPillsTaken(d)) pillDays++;
     });
     var streak = calcStreak();
     $("historyStats").innerHTML =
@@ -1247,6 +1352,7 @@
       stat(sleepDays ? fmtHours((sleepSum / sleepDays).toFixed(1)) : "—", t("st_sleep")) +
       stat(kenDays ? fmtHours((kenSum / kenDays).toFixed(1)) : "—", t("st_ken")) +
       stat(blDays ? fmtHours((blSum / blDays).toFixed(1)) : "—", t("st_bloat")) +
+      stat(pillDays, t("st_pills")) +
       stat(streak, t("st_streak"));
 
     var list = $("historyList");
@@ -1287,6 +1393,8 @@
           (a.time ? " <span class='htime'>🕐 " + esc(a.time) + "</span>" : "") + "</span><span class='hv'>" +
           esc(a.type || "—") + (a.duration ? " · " + esc(a.duration) : "") + "</span></div>";
       });
+      if (dayPills(d).length) extra += "<div class='hrow'><span class='hm'>" + t("h_pills") + "</span><span class='hv'>" +
+        dayPills(d).map(function (p) { return "<span class='" + (p.taken ? "pill-ok" : "pill-no") + "'>" + esc(pillLine(p)) + "</span>"; }).join(" · ") + "</span></div>";
       if (d.sleep) extra += "<div class='hrow'><span class='hm'>" + t("h_sleep") + "</span><span class='hv'>" + fmtHours(d.sleep) + (d.sleep === 1 ? t("hour1") : t("hourN")) + "</span></div>";
       if (d.kenoseis) extra += "<div class='hrow'><span class='hm'>" + t("h_ken") + "</span><span class='hv'>" + d.kenoseis + (d.kenoseis === 1 ? t("time1") : t("timeN")) + "</span></div>";
       if (d.bloat > 0) extra += "<div class='hrow'><span class='hm'>" + t("h_bloat") + "</span><span class='hv'>" + bloatBadge(d.bloat) + "</span></div>"; // παλιά ημερήσια τιμή
@@ -1361,7 +1469,7 @@
       head.push(mealName(m) + " — " + t("x_time"));
       m.slots.forEach(function () { head.push(mealName(m) + " — " + t("x_food")); });
     });
-    head.push(t("x_extras"), t("x_act_time"), t("x_act_type"), t("x_act_dur"), t("x_sleep"), t("x_ken"), t("x_bloat"), t("x_water"), t("x_notes"));
+    head.push(t("x_extras"), t("x_act_time"), t("x_act_type"), t("x_act_dur"), t("x_pills"), t("x_sleep"), t("x_ken"), t("x_bloat"), t("x_water"), t("x_notes"));
     var rows = [head.map(function (h) { return { v: h, s: "head" }; })];
     keys.forEach(function (k) {
       var d = db[k];
@@ -1376,6 +1484,7 @@
         acts.map(function (a) { return a.time || ""; }).join("\n"),
         acts.map(function (a) { return a.type || ""; }).join("\n"),
         acts.map(function (a) { return a.duration || ""; }).join("\n"),
+        dayPills(d).map(pillLine).join("\n"),
         d.sleep || "", d.kenoseis || "", bloatValues(d).map(function (b) { return b.label + " " + b.v + "/10"; }).join("\n"), getWaterMl(d) || 0, d.notes || ""
       );
       rows.push(row);
@@ -1464,7 +1573,12 @@
         });
         rows.push(r9); heights.push(52);
 
-        // Γρ.11-14: ύπνος, κενώσεις, νερό & σημειώσεις (το φούσκωμα μπαίνει μέσα στο κελί κάθε γεύματος) (δικά μας πεδία, στο ίδιο ύφος)
+        // Γρ.11: χάπια & συμπληρώματα (✓/✗ + ώρα ανά γραμμή)
+        var rP = [{ v: "ΧΑΠΙΑ", s: "mealtag" }, { v: "", s: "mealtag" }];
+        keys.forEach(function (k) { rP.push({ v: dayPills(db[k]).map(pillLine).join("\n"), s: "cell" }); });
+        rows.push(rP); heights.push(58);
+
+        // Γρ.12-15: ύπνος, κενώσεις, νερό & σημειώσεις (το φούσκωμα μπαίνει μέσα στο κελί κάθε γεύματος) (δικά μας πεδία, στο ίδιο ύφος)
         var r10 = [{ v: "ΥΠΝΟΣ (ΩΡΕΣ)", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) { r10.push({ v: (db[k] && db[k].sleep) || "", s: "cell" }); });
         rows.push(r10); heights.push(20);
@@ -1484,7 +1598,7 @@
           cols: [15, 4.5, 18, 18, 18, 18, 18, 18, 18],
           rows: rows,
           heights: heights,
-          merges: ["A1:B2", "A8:B8", "A9:B10", "A11:B11", "A12:B12", "A13:B13", "A14:B14"],
+          merges: ["A1:B2", "A8:B8", "A9:B10", "A11:B11", "A12:B12", "A13:B13", "A14:B14", "A15:B15"],
           landscape: true
         });
       }
@@ -1505,7 +1619,7 @@
       head.push(mealName(m) + " - " + t("x_time"));
       m.slots.forEach(function () { head.push(mealName(m) + " - " + t("x_food")); });
     });
-    head.push(t("x_extras"), t("x_act_time"), t("x_act_type"), t("x_act_dur"), t("x_sleep"), t("x_ken"), t("x_bloat"), t("x_water"), t("x_notes"));
+    head.push(t("x_extras"), t("x_act_time"), t("x_act_type"), t("x_act_dur"), t("x_pills"), t("x_sleep"), t("x_ken"), t("x_bloat"), t("x_water"), t("x_notes"));
     var lines = [head.map(q).join(";")];
     keys.forEach(function (k) {
       var d = db[k];
@@ -1520,6 +1634,7 @@
         acts.map(function (a) { return a.time || ""; }).join(" | "),
         acts.map(function (a) { return a.type || ""; }).join(" | "),
         acts.map(function (a) { return a.duration || ""; }).join(" | "),
+        dayPills(d).map(pillLine).join(" | "),
         d.sleep ? fmtHours(d.sleep) : "", d.kenoseis || "", bloatValues(d).map(function (b) { return b.label + " " + b.v + "/10"; }).join(" | "), getWaterMl(d) || 0, d.notes || ""
       );
       lines.push(row.map(q).join(";"));
@@ -1938,6 +2053,9 @@
       m.activity = JSON.parse(JSON.stringify(m.activities[0]));
     }
     if (!dayExtras(m).length && dayExtras(loc).length) m.extras = JSON.parse(JSON.stringify(loc.extras));
+    dayPills(loc).forEach(function (lp) {
+      if (!dayPills(m).some(function (rp) { return rp.id === lp.id; })) { if (!m.pills) m.pills = []; m.pills.push(JSON.parse(JSON.stringify(lp))); }
+    });
     if (!getWaterMl(m) && getWaterMl(loc)) { m.waterMl = getWaterMl(loc); delete m.water; }
     if (!(m.sleep > 0) && loc.sleep > 0) m.sleep = loc.sleep;
     if (!(m.kenoseis > 0) && loc.kenoseis > 0) m.kenoseis = loc.kenoseis;

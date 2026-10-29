@@ -209,7 +209,7 @@
     }
     if (sheet.landscape) {
       xml += '<pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>' +
-        '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>';
+        '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="1"/>';
     }
     xml += '</worksheet>';
     return xml;
