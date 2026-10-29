@@ -2170,7 +2170,7 @@
   });
 
   /* ---------- Footer ---------- */
-  var APP_VERSION = "v3.3";
+  var APP_VERSION = "v3.4";
   function updateFootStats() {
     var keys = sortedKeys();
     $("footStats").textContent = (keys.length
