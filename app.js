@@ -34,7 +34,7 @@
       pills_title: "💊 Χάπια & Συμπληρώματα", pill_add: "➕ Άλλο χάπι", pill_del: "Αφαίρεση", pill_name_ph: "Όνομα χαπιού…",
       pill_time: "Ώρα λήψης", pill_taken: "Το πήρα", pill_hint: "Τικ = το πήρε· η ώρα συμπληρώνεται αυτόματα με το τικ (αλλάζει με το χέρι).",
       pill_melatonin: "Μελατονίνη (ύπνος)", pill_vitamins: "Βιταμίνες Creta Iama", pill_mollers: "Möller's (μουρουνέλαιο)",
-      pills_melatonin: "Μελατονίνη", pills_vitamins: "Creta Iama", pills_mollers: "Möller's",
+      pill_probiotic: "Προβιοτικό", pill_magnesium: "Μαγνήσιο", pills_melatonin: "Μελατονίνη", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Προβιοτικό", pills_magnesium: "Μαγνήσιο",
       week_pills: "💊 Χάπια", h_pills: "💊 Χάπια", x_pills: "Χάπια", st_pills: "ημέρες με όλα τα χάπια 💊",
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα γεύματος…",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
@@ -107,7 +107,7 @@
       pills_title: "💊 Pills & Supplements", pill_add: "➕ Other pill", pill_del: "Remove", pill_name_ph: "Pill name…",
       pill_time: "Time taken", pill_taken: "Taken", pill_hint: "Tick = taken; the time fills in automatically on tick (editable).",
       pill_melatonin: "Melatonin (sleep)", pill_vitamins: "Creta Iama vitamins", pill_mollers: "Möller's (cod liver oil)",
-      pills_melatonin: "Melatonin", pills_vitamins: "Creta Iama", pills_mollers: "Möller's",
+      pill_probiotic: "Probiotic", pill_magnesium: "Magnesium", pills_melatonin: "Melatonin", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Probiotic", pills_magnesium: "Magnesium",
       week_pills: "💊 Pills", h_pills: "💊 Pills", x_pills: "Pills", st_pills: "days with all pills 💊",
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Meal name…",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
@@ -413,7 +413,9 @@
   var DEFAULT_PILLS = [
     { id: "melatonin", emoji: "🌙" },
     { id: "vitamins", emoji: "💊" },
-    { id: "mollers", emoji: "🐟" }
+    { id: "mollers", emoji: "🐟" },
+    { id: "probiotic", emoji: "🦠" },
+    { id: "magnesium", emoji: "⚡" }
   ];
   function dayPills(d) { return (d && d.pills && d.pills.length) ? d.pills : []; }
   function pillName(p) {
@@ -1576,7 +1578,7 @@
         // Γρ.11: χάπια & συμπληρώματα (✓/✗ + ώρα ανά γραμμή)
         var rP = [{ v: "ΧΑΠΙΑ", s: "mealtag" }, { v: "", s: "mealtag" }];
         keys.forEach(function (k) { rP.push({ v: dayPills(db[k]).map(pillLine).join("\n"), s: "cell" }); });
-        rows.push(rP); heights.push(58);
+        rows.push(rP); heights.push(72);
 
         // Γρ.12-15: ύπνος, κενώσεις, νερό & σημειώσεις (το φούσκωμα μπαίνει μέσα στο κελί κάθε γεύματος) (δικά μας πεδία, στο ίδιο ύφος)
         var r10 = [{ v: "ΥΠΝΟΣ (ΩΡΕΣ)", s: "mealtag" }, { v: "", s: "mealtag" }];
@@ -2170,7 +2172,7 @@
   });
 
   /* ---------- Footer ---------- */
-  var APP_VERSION = "v3.4";
+  var APP_VERSION = "v3.5";
   function updateFootStats() {
     var keys = sortedKeys();
     $("footStats").textContent = (keys.length
