@@ -34,7 +34,8 @@
       pills_title: "💊 Χάπια & Συμπληρώματα", pill_add: "➕ Άλλο χάπι", pill_del: "Αφαίρεση", pill_name_ph: "Όνομα χαπιού…",
       pill_time: "Ώρα λήψης", pill_taken: "Το πήρα", pill_hint: "Τικ = το πήρε· η ώρα συμπληρώνεται αυτόματα με το τικ (αλλάζει με το χέρι).",
       pill_melatonin: "Μελατονίνη (ύπνος)", pill_vitamins: "Βιταμίνες Creta Iama", pill_mollers: "Möller's (μουρουνέλαιο)",
-      pill_probiotic: "Προβιοτικό", pill_magnesium: "Μαγνήσιο", pills_melatonin: "Μελατονίνη", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Προβιοτικό", pills_magnesium: "Μαγνήσιο",
+      pill_probiotic: "Προβιοτικό", pill_magnesium: "Μαγνήσιο", pill_protein: "Πρωτεΐνη", pill_creatine: "Κρεατίνη",
+      gym_supps: "💪 Συμπληρώματα γυμναστικής", pills_protein: "Πρωτεΐνη", pills_creatine: "Κρεατίνη", pills_melatonin: "Μελατονίνη", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Προβιοτικό", pills_magnesium: "Μαγνήσιο",
       week_pills: "💊 Χάπια", h_pills: "💊 Χάπια", x_pills: "Χάπια", st_pills: "ημέρες με όλα τα χάπια 💊",
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα γεύματος…",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
@@ -107,7 +108,8 @@
       pills_title: "💊 Pills & Supplements", pill_add: "➕ Other pill", pill_del: "Remove", pill_name_ph: "Pill name…",
       pill_time: "Time taken", pill_taken: "Taken", pill_hint: "Tick = taken; the time fills in automatically on tick (editable).",
       pill_melatonin: "Melatonin (sleep)", pill_vitamins: "Creta Iama vitamins", pill_mollers: "Möller's (cod liver oil)",
-      pill_probiotic: "Probiotic", pill_magnesium: "Magnesium", pills_melatonin: "Melatonin", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Probiotic", pills_magnesium: "Magnesium",
+      pill_probiotic: "Probiotic", pill_magnesium: "Magnesium", pill_protein: "Protein", pill_creatine: "Creatine",
+      gym_supps: "💪 Gym supplements", pills_protein: "Protein", pills_creatine: "Creatine", pills_melatonin: "Melatonin", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Probiotic", pills_magnesium: "Magnesium",
       week_pills: "💊 Pills", h_pills: "💊 Pills", x_pills: "Pills", st_pills: "days with all pills 💊",
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Meal name…",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
@@ -417,17 +419,25 @@
     { id: "probiotic", emoji: "🦠" },
     { id: "magnesium", emoji: "⚡" }
   ];
+  // Συμπληρώματα γυμναστικής: ίδια λογική (τικ + ώρα), αλλά στην κάρτα της Φυσικής Δραστηριότητας·
+  // δεν μετράνε στο «ημέρες με όλα τα χάπια»
+  var GYM_PILLS = [
+    { id: "protein", emoji: "🥤" },
+    { id: "creatine", emoji: "💪" }
+  ];
+  var FIXED_PILLS = DEFAULT_PILLS.concat(GYM_PILLS);
+  function isFixedPill(id) { return FIXED_PILLS.some(function (d) { return d.id === id; }); }
   function dayPills(d) { return (d && d.pills && d.pills.length) ? d.pills : []; }
   function pillName(p) {
-    var def = DEFAULT_PILLS.filter(function (x) { return x.id === p.id; })[0];
+    var def = FIXED_PILLS.filter(function (x) { return x.id === p.id; })[0];
     return def ? t("pill_" + p.id) : ((p.name || "").trim() || "—");
   }
   function pillEmoji(p) {
-    var def = DEFAULT_PILLS.filter(function (x) { return x.id === p.id; })[0];
+    var def = FIXED_PILLS.filter(function (x) { return x.id === p.id; })[0];
     return def ? def.emoji : "💊";
   }
   function pillShort(p) { // σύντομο όνομα για Εβδομάδα/Excel
-    var def = DEFAULT_PILLS.filter(function (x) { return x.id === p.id; })[0];
+    var def = FIXED_PILLS.filter(function (x) { return x.id === p.id; })[0];
     return def ? t("pills_" + p.id) : ((p.name || "").trim() || "—");
   }
   function pillLine(p) { return (p.taken ? "✓ " : "✗ ") + pillShort(p) + (p.time ? " " + p.time : ""); }
@@ -884,18 +894,19 @@
   function renderPills(list) {
     var byId = {};
     (list || []).forEach(function (p) { byId[p.id] = p; });
-    var html = DEFAULT_PILLS.map(function (def) {
-      var p = byId[def.id] || { id: def.id, time: "", taken: false };
-      return pillRowHtml(p, true);
-    }).join("");
-    (list || []).forEach(function (p) { if (!DEFAULT_PILLS.some(function (d) { return d.id === p.id; })) html += pillRowHtml(p, false); });
+    function fixedRows(defs) {
+      return defs.map(function (def) { return pillRowHtml(byId[def.id] || { id: def.id, time: "", taken: false }, true); }).join("");
+    }
+    var html = fixedRows(DEFAULT_PILLS);
+    (list || []).forEach(function (p) { if (!isFixedPill(p.id)) html += pillRowHtml(p, false); });
     $("pillList").innerHTML = html;
+    $("gymPillList").innerHTML = fixedRows(GYM_PILLS);
   }
   function readPills() {
     var out = [];
-    document.querySelectorAll("#pillList .pill-row").forEach(function (row) {
+    document.querySelectorAll("#pillList .pill-row, #gymPillList .pill-row").forEach(function (row) {
       var id = row.dataset.pill;
-      var isDefault = DEFAULT_PILLS.some(function (d) { return d.id === id; });
+      var isDefault = isFixedPill(id);
       var p = { id: id, time: row.querySelector(".p-time").value, taken: row.querySelector(".p-taken").checked };
       if (!isDefault) p.name = row.querySelector(".p-custom").value.trim();
       if (p.taken || p.time || (!isDefault && p.name)) out.push(p); // άδειες γραμμές δεν αποθηκεύονται
@@ -907,21 +918,23 @@
     var rows = document.querySelectorAll("#pillList .pill-row");
     rows[rows.length - 1].querySelector(".p-custom").focus();
   });
-  $("pillList").addEventListener("change", function (e) {
-    if (e.target.classList.contains("p-taken")) {
-      var row = e.target.closest(".pill-row");
-      row.classList.toggle("taken", e.target.checked);
-      var tm = row.querySelector(".p-time");
-      if (e.target.checked && !tm.value) tm.value = nowHHMM(); // η ώρα γεμίζει μόνη της με το τικ
-    }
-    scheduleSave();
-  });
-  $("pillList").addEventListener("input", scheduleSave);
-  $("pillList").addEventListener("click", function (e) {
-    var b = e.target.closest(".p-del");
-    if (!b) return;
-    b.closest(".pill-row").remove();
-    scheduleSave();
+  ["pillList", "gymPillList"].forEach(function (id) {
+    $(id).addEventListener("change", function (e) {
+      if (e.target.classList.contains("p-taken")) {
+        var row = e.target.closest(".pill-row");
+        row.classList.toggle("taken", e.target.checked);
+        var tm = row.querySelector(".p-time");
+        if (e.target.checked && !tm.value) tm.value = nowHHMM(); // η ώρα γεμίζει μόνη της με το τικ
+      }
+      scheduleSave();
+    });
+    $(id).addEventListener("input", scheduleSave);
+    $(id).addEventListener("click", function (e) {
+      var b = e.target.closest(".p-del");
+      if (!b) return;
+      b.closest(".pill-row").remove();
+      scheduleSave();
+    });
   });
 
   /* Νυχτερινός ύπνος (ώρες, με γρήγορες επιλογές) */
@@ -969,7 +982,7 @@
     });
     if (!keep) layoutCards(day); // οι κάρτες ξαναστήνονται μόνο όταν δεν γράφει κανείς (αλλιώς χάνεται η εστίαση)
     if (!(keep && keep.closest("#actList"))) renderActivities(dayActivities(day));
-    if (!(keep && keep.closest("#pillList"))) renderPills(dayPills(day));
+    if (!(keep && keep.closest("#pillList, #gymPillList"))) renderPills(dayPills(day));
     setVal($("dayNotes"), day.notes || "");
     var ml = getWaterMl(day);
     setVal($("waterMl"), ml > 0 ? ml : "");
@@ -2172,7 +2185,7 @@
   });
 
   /* ---------- Footer ---------- */
-  var APP_VERSION = "v3.5";
+  var APP_VERSION = "v3.6";
   function updateFootStats() {
     var keys = sortedKeys();
     $("footStats").textContent = (keys.length

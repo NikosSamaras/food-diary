@@ -328,6 +328,9 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
 input.p-custom{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 9px;width:100%;min-width:0}
 .p-time{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:8px;padding:5px 7px;font-size:.9rem;max-width:120px}
 .p-del{border:1px solid var(--line);background:var(--surface);color:var(--danger);border-radius:8px;padding:6px 9px;line-height:1}
+.gym-supps{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.gym-supps .slot-label{display:block;margin-bottom:8px}
+.gym-pills{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0}
 .pill-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .pill-foot .hint{margin:0;font-size:.78rem}
 .pill-ok{color:var(--brand-strong);font-weight:600}
@@ -518,6 +521,7 @@ code{background:var(--surface-2);padding:1px 6px;border-radius:6px;font-size:.85
   }
   .nav-btn{width:44px;height:44px}
   .water-ctl input[type=number]{font-size:16px;padding:11px 12px} /* αποτρέπει zoom στο iOS */
+  .gym-pills{grid-template-columns:1fr}
   .pill-row{grid-template-columns:auto auto 1fr auto}
   .pill-row .p-time{grid-column:3/-1;justify-self:start;font-size:16px}
   .pill-row .p-del{grid-row:1;grid-column:4}
