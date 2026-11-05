@@ -33,9 +33,9 @@
       act_add: "➕ Προσθήκη δραστηριότητας", act_del: "Αφαίρεση δραστηριότητας",
       pills_title: "💊 Χάπια & Συμπληρώματα", pill_add: "➕ Άλλο χάπι", pill_del: "Αφαίρεση", pill_name_ph: "Όνομα χαπιού…",
       pill_time: "Ώρα λήψης", pill_taken: "Το πήρα", pill_hint: "Τικ = το πήρε· η ώρα συμπληρώνεται αυτόματα με το τικ (αλλάζει με το χέρι).",
-      pill_melatonin: "Μελατονίνη (ύπνος)", pill_vitamins: "Βιταμίνες Creta Iama", pill_mollers: "Möller's (μουρουνέλαιο)",
+      pill_melatonin: "Μελατονίνη (ύπνος)", pill_vitamins: "Βιταμίνες Möller's", pill_mollers: "Möller's (μουρουνέλαιο)",
       pill_probiotic: "Προβιοτικό", pill_magnesium: "Μαγνήσιο", pill_protein: "Πρωτεΐνη", pill_creatine: "Κρεατίνη",
-      gym_supps: "💪 Συμπληρώματα γυμναστικής", pills_protein: "Πρωτεΐνη", pills_creatine: "Κρεατίνη", pills_melatonin: "Μελατονίνη", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Προβιοτικό", pills_magnesium: "Μαγνήσιο",
+      gym_supps: "💪 Συμπληρώματα γυμναστικής", pills_protein: "Πρωτεΐνη", pills_creatine: "Κρεατίνη", pills_melatonin: "Μελατονίνη", pills_vitamins: "Βιταμίνες Möller's", pills_mollers: "Möller's", pills_probiotic: "Προβιοτικό", pills_magnesium: "Μαγνήσιο",
       week_pills: "💊 Χάπια", h_pills: "💊 Χάπια", x_pills: "Χάπια", st_pills: "ημέρες με όλα τα χάπια 💊",
       extra_add: "➕ Ενδιάμεσο γεύμα", extra_default: "Ενδιάμεσο", extra_name_ph: "Όνομα γεύματος…",
       extra_del: "Αφαίρεση γεύματος", extra_time: "Ώρα", week_extras: "🍴 Ενδιάμεσα", x_extras: "Ενδιάμεσα γεύματα",
@@ -107,9 +107,9 @@
       act_add: "➕ Add activity", act_del: "Remove activity",
       pills_title: "💊 Pills & Supplements", pill_add: "➕ Other pill", pill_del: "Remove", pill_name_ph: "Pill name…",
       pill_time: "Time taken", pill_taken: "Taken", pill_hint: "Tick = taken; the time fills in automatically on tick (editable).",
-      pill_melatonin: "Melatonin (sleep)", pill_vitamins: "Creta Iama vitamins", pill_mollers: "Möller's (cod liver oil)",
+      pill_melatonin: "Melatonin (sleep)", pill_vitamins: "Möller's vitamins", pill_mollers: "Möller's (cod liver oil)",
       pill_probiotic: "Probiotic", pill_magnesium: "Magnesium", pill_protein: "Protein", pill_creatine: "Creatine",
-      gym_supps: "💪 Gym supplements", pills_protein: "Protein", pills_creatine: "Creatine", pills_melatonin: "Melatonin", pills_vitamins: "Creta Iama", pills_mollers: "Möller's", pills_probiotic: "Probiotic", pills_magnesium: "Magnesium",
+      gym_supps: "💪 Gym supplements", pills_protein: "Protein", pills_creatine: "Creatine", pills_melatonin: "Melatonin", pills_vitamins: "Möller's vitamins", pills_mollers: "Möller's", pills_probiotic: "Probiotic", pills_magnesium: "Magnesium",
       week_pills: "💊 Pills", h_pills: "💊 Pills", x_pills: "Pills", st_pills: "days with all pills 💊",
       extra_add: "➕ Extra meal", extra_default: "Snack", extra_name_ph: "Meal name…",
       extra_del: "Remove meal", extra_time: "Time", week_extras: "🍴 Extra meals", x_extras: "Extra meals",
@@ -2185,7 +2185,7 @@
   });
 
   /* ---------- Footer ---------- */
-  var APP_VERSION = "v3.6";
+  var APP_VERSION = "v3.7";
   function updateFootStats() {
     var keys = sortedKeys();
     $("footStats").textContent = (keys.length
